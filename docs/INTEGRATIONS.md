@@ -5,10 +5,7 @@ Maestro is a **transparent OpenAI-compatible proxy** — exactly like pointing a
 ## 1. Start Maestro
 
 ```bash
-# zero keys (mock provider, for trying it):
-npx openmaestro serve
-
-# real models — one OpenRouter key unlocks the whole catalog:
+# one OpenRouter key unlocks the whole catalog, routed automatically:
 OPENROUTER_API_KEY=sk-or-... npx openmaestro serve
 ```
 

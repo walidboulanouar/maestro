@@ -73,13 +73,14 @@
 
   <h2 id="start">Try it in 30 seconds</h2>
   <div class="box">
-    <p>Runs with <b>zero API keys</b> (built-in mock provider):</p>
-    <pre>npx openmaestro serve
+    <p>Bring one provider key, start the server, point your OpenAI client at it:</p>
+    <pre>export OPENROUTER_API_KEY=sk-or-...     # one key, open + closed (BYOK)
+# or LOCAL_OPENAI_BASE_URL=http://localhost:11434/v1   # Ollama/vLLM, fully local
+
+npx openmaestro serve
 curl -s localhost:8080/v1/chat/completions -H 'content-type: application/json' \
   -d '{"model":"maestro-auto","messages":[{"role":"user","content":"hello"}]}' | jq .maestro</pre>
-    <p>Add a key for real models — your OpenAI code doesn't change, just the base URL:</p>
-    <pre>export OPENROUTER_API_KEY=sk-or-...     # open + closed, BYOK
-# or LOCAL_OPENAI_BASE_URL=http://localhost:11434/v1   # Ollama/vLLM — 100% offline</pre>
+    <p>Your existing OpenAI code doesn't change, just the base URL.</p>
   </div>
 
   <h2>Use it in your agent</h2>
@@ -93,7 +94,7 @@ model:   maestro-auto</pre></div>
   <h2>vs the other open-source attempts</h2>
   <table>
     <tr><th></th><th>Maestro</th><th>OpenFugu</th><th>LoRA-Harness</th></tr>
-    <tr><td>Runs with no GPU / no keys</td><td class="yes">YES</td><td class="no">no</td><td class="no">no</td></tr>
+    <tr><td>Runs with no GPU (self-host)</td><td class="yes">YES</td><td class="no">no</td><td class="no">no</td></tr>
     <tr><td>Any provider (open + closed)</td><td class="yes">YES</td><td>research pool</td><td class="no">LoRA only</td></tr>
     <tr><td>OpenAI + Anthropic API</td><td class="yes">YES</td><td>partial</td><td>OpenAI</td></tr>
     <tr><td>Honest reproducible benchmark</td><td class="yes">YES</td><td class="no">mock +107%</td><td class="no">none</td></tr>

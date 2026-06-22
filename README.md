@@ -11,7 +11,7 @@ Cheap-first, verify, escalate. Full cost and route transparency. Self-hostable. 
 
 *Open-source Fugu: open, honest, EU-clean, runs anywhere, and not locked to three closed models.*
 
-> **The one thing no other open-source project does:** Maestro is the only open-source LLM router you can run with **zero setup, no GPU, no keys** (`npx openmaestro serve`) that is **both OpenAI- and Anthropic-compatible** (works in Claude Code and opencode) with **per-request cost transparency** and a **reproducible benchmark**. OpenFugu needs a GPU and ships a *mock* benchmark; LoRA-Harness ships none. See [COMPARISON.md](COMPARISON.md).
+> **The one thing no other open-source project does:** Maestro is the only open-source LLM router you can self-host with **zero setup and no GPU** (bring one API key) that is **both OpenAI- and Anthropic-compatible** (works in Claude Code and opencode) with **per-request cost transparency** and a **reproducible benchmark**. OpenFugu needs a GPU; LoRA-Harness needs a GPU. See [COMPARISON.md](COMPARISON.md).
 
 > ⚠️ **Status: early. This is an honest ~5-hour build (v0.1).** The core works and is tested live on real models (routing, verify/escalate, tool/agent loops, OpenAI + Anthropic APIs, streaming, transparency). It is NOT production-hardened yet, and the learned router is not built. Treat it as a strong, runnable foundation, not a finished product. See the [Roadmap](#roadmap) for what is next and [VERIFICATION.md](VERIFICATION.md) for exactly what is proven vs assumed.
 
@@ -46,9 +46,13 @@ Modern LLM stacks have a problem: the best model for a one-line translation is n
 
 ## 30-second quickstart
 
-Maestro runs with **zero API keys** out of the box (built-in mock provider), so you can see it work instantly:
+Bring one provider key (OpenRouter unlocks the whole catalog), start the server, and point your OpenAI client at it:
 
 ```bash
+export OPENROUTER_API_KEY=sk-or-...     # one key, open + closed models (BYOK)
+# or AI_GATEWAY_API_KEY=...             # Vercel AI Gateway (also serves Fugu)
+# or LOCAL_OPENAI_BASE_URL=http://localhost:11434/v1   # Ollama / vLLM / llama.cpp, fully local
+
 npx openmaestro serve            # or: docker run -p 8080:8080 ghcr.io/youruser/maestro
 ```
 
@@ -59,7 +63,7 @@ curl -s localhost:8080/v1/chat/completions \
   | jq .maestro
 ```
 
-Add a real key and it routes to real models. Your existing OpenAI code doesn't change, just the base URL:
+Your existing OpenAI code doesn't change, just the base URL:
 
 ```python
 from openai import OpenAI
@@ -70,14 +74,6 @@ client.chat.completions.create(
     messages=[{"role": "user", "content": "Design a multi-region rate limiter."}],
 )
 ```
-
-```bash
-export OPENROUTER_API_KEY=sk-or-...     # open + closed models, BYOK
-# or AI_GATEWAY_API_KEY=...             # Vercel AI Gateway (0% markup, also serves Fugu)
-# or LOCAL_OPENAI_BASE_URL=http://localhost:11434/v1   # Ollama / vLLM / llama.cpp, 100% offline
-```
-
-Want the full demo with **real prices but no spend**? `MAESTRO_FORCE_MOCK=true npx openmaestro serve` routes over the priced registry and executes on the mock provider.
 
 ## Use it in your coding agent
 

@@ -8,7 +8,7 @@
 |---|---|---|
 | It builds & typechecks | `npm install && npm run typecheck && npm run build` | exit 0, `dist/cli.js` exists |
 | It's tested | `npm test` | **30 tests pass** |
-| It runs with zero keys | `npx openmaestro serve` then `curl localhost:8080/healthz` | `{"status":"ok",...}` on the mock provider |
+| The server boots without a GPU | `npx openmaestro serve` then `curl localhost:8080/healthz` | `{"status":"ok",...}` (add a provider key to route to real models) |
 | It routes & escalates | `bash scripts/verify.sh` | all endpoint checks ✅ |
 | It saves money (routing) | `npm run eval` | maestro ≈ 92% pass at ~97% lower cost than best-single (and beats random) |
 | It works in Claude Code | `ANTHROPIC_BASE_URL=http://localhost:8080 ANTHROPIC_API_KEY=unused claude` | Claude Code talks to Maestro |
