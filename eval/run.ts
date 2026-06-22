@@ -173,8 +173,10 @@ async function main(): Promise<void> {
 }
 
 function pickDeterministic(pool: ModelSpec[], i: number): ModelSpec {
-  // deterministic stand-in for "random" (no Math.random → reproducible)
-  return pool[(i * 7 + 3) % pool.length]!;
+  // deterministic stand-in for "random" (no Math.random → reproducible).
+  // LCG so it actually varies across the pool (a plain i*k%len can be constant).
+  const idx = ((i * 1103515245 + 12345) >>> 0) % pool.length;
+  return pool[idx]!;
 }
 
 main().catch((err) => {

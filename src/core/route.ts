@@ -26,6 +26,9 @@ export interface RouteContext {
 
 const TIER_ORDER: Tier[] = ["cheap", "mid", "frontier"];
 
+/** How strongly to prefer cheaper models when quality is comparable. */
+const PRICE_WEIGHT = 2.0;
+
 export function guardrailScore(model: ModelSpec, sig: TaskSignature): number {
   let score = model.strength; // priority
   const tags = model.tags ?? {};
@@ -37,6 +40,10 @@ export function guardrailScore(model: ModelSpec, sig: TaskSignature): number {
     else if (kind === "positive") score += 10 * weight;
     else if (kind === "negative") score -= 250 * weight;
   }
+  // Cost-awareness: this is a cost optimizer, so gently prefer cheaper models.
+  // Blended USD/1M tokens (input + output); mock models (price 0) are unaffected.
+  const blendedPrice = model.price.in + model.price.out;
+  score -= PRICE_WEIGHT * blendedPrice;
   return score;
 }
 

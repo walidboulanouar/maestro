@@ -1,16 +1,25 @@
 {"id":"easy-greet","prompt":"Say hello in one sentence.","task":"general","difficulty":0.05}
-{"id":"easy-fact","prompt":"What is the capital of France?","task":"factual","difficulty":0.05}
+{"id":"easy-fact-fr","prompt":"What is the capital of France?","task":"factual","difficulty":0.05}
+{"id":"easy-fact-http","prompt":"What does HTTP stand for?","task":"factual","difficulty":0.08}
 {"id":"easy-translate","prompt":"Translate 'good morning' into Spanish.","task":"translation","difficulty":0.1}
-{"id":"easy-arith","prompt":"What is 12 + 30?","task":"math","difficulty":0.1}
+{"id":"easy-translate2","prompt":"How do you say 'thank you' in Japanese?","task":"translation","difficulty":0.1}
+{"id":"easy-arith","prompt":"What is 12 + 30?","task":"math","difficulty":0.08}
+{"id":"easy-convert","prompt":"Convert 5 kilometers to miles, approximately.","task":"math","difficulty":0.15}
+{"id":"easy-list","prompt":"List three common fruits.","task":"general","difficulty":0.05}
+{"id":"easy-define-var","prompt":"In one sentence, what is a variable in programming?","task":"factual","difficulty":0.15}
+{"id":"easy-uppercase","prompt":"How do I uppercase a string in Python?","task":"code","difficulty":0.2}
+{"id":"easy-rhyme","prompt":"Give me a word that rhymes with 'cat'.","task":"general","difficulty":0.05}
+{"id":"easy-summarize","prompt":"Summarize in one sentence: the sky is blue because of Rayleigh scattering.","task":"general","difficulty":0.2}
 {"id":"mid-code-fix","prompt":"Fix this JS: function add(a,b){return a-b}. It should add.","task":"code","difficulty":0.35}
 {"id":"mid-regex","prompt":"Write a regex to match a US phone number like 555-123-4567.","task":"code","difficulty":0.4}
+{"id":"mid-debounce","prompt":"Write a JavaScript debounce function and briefly explain it.","task":"code","difficulty":0.5}
 {"id":"mid-explain","prompt":"Explain the difference between a process and a thread.","task":"factual","difficulty":0.45}
+{"id":"mid-tcp-udp","prompt":"Explain the difference between TCP and UDP and when to use each.","task":"factual","difficulty":0.5}
 {"id":"mid-math","prompt":"Solve for x: 3x + 7 = 22, and show the steps.","task":"math","difficulty":0.5}
 {"id":"hard-algo","prompt":"Design and explain an efficient algorithm to find the median of two sorted arrays in O(log(m+n)), with edge cases.","task":"code","difficulty":0.85}
 {"id":"hard-proof","prompt":"Prove that the square root of 2 is irrational, rigorously and step by step.","task":"math","difficulty":0.8}
 {"id":"hard-arch","prompt":"Design a production-grade, end-to-end architecture for a multi-region rate limiter, analyzing trade-offs and failure modes.","task":"code","difficulty":0.95}
 {"id":"hard-reason","prompt":"Analyze step by step whether a carbon tax or cap-and-trade is more effective, considering trade-offs and edge cases.","task":"reasoning","difficulty":0.8}
 {"id":"trap-code-gdpr","prompt":"Fix a React hydration bug AND explain its GDPR impact for EU users.","task":"code","difficulty":0.75}
-{"id":"trap-stacktrace","prompt":"Translate this stack trace into a concrete fix: TypeError: cannot read property 'map' of undefined at UserList.tsx:42.","task":"code","difficulty":0.6}
 {"id":"trap-mixed","prompt":"Write a Python function to compute compound interest, then prove its time complexity is O(1).","task":"code","difficulty":0.7}
 {"id":"fresh-news","prompt":"What are the latest developments in AI model routing as of this week?","task":"factual","difficulty":0.6}
