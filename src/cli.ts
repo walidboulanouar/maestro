@@ -7,8 +7,10 @@
  *   maestro registry check          report registry staleness
  *   maestro version                 print version
  */
+import { existsSync, writeFileSync } from "node:fs";
 import { serve } from "@hono/node-server";
 import { loadConfig } from "./config.js";
+import { DEFAULT_REGISTRY } from "./registry/models.js";
 import { classify } from "./core/classify.js";
 import { route, type RouteContext } from "./core/route.js";
 import { totalChars } from "./core/transcript.js";
@@ -99,6 +101,23 @@ function cmdRegistryCheck(): void {
   if (stale.length) console.log(`⚠  ${stale.length} model price(s) older than 30 days.`);
 }
 
+function cmdInit(): void {
+  const path = "maestro.config.json";
+  if (existsSync(path)) {
+    console.log(`${path} already exists, not overwriting.`);
+  } else {
+    writeFileSync(path, JSON.stringify(DEFAULT_REGISTRY, null, 2) + "\n");
+    console.log(`✓ wrote ${path} (edit it to swap models, then set MAESTRO_REGISTRY=./${path})`);
+  }
+  console.log(
+    `\nnext steps:\n` +
+      `  1. set a key:   export OPENROUTER_API_KEY=sk-or-...\n` +
+      `  2. pick a profile (optional): export MAESTRO_PROFILE=cheap|balanced|quality\n` +
+      `  3. run:         maestro serve\n` +
+      `  4. inspect:     open http://localhost:8080/ui\n`,
+  );
+}
+
 async function main(): Promise<void> {
   const [cmd, ...args] = process.argv.slice(2);
   switch (cmd) {
@@ -112,6 +131,9 @@ async function main(): Promise<void> {
       if (args[0] === "check") cmdRegistryCheck();
       else console.error("usage: maestro registry check");
       break;
+    case "init":
+      cmdInit();
+      break;
     case "version":
     case "--version":
     case "-v":
@@ -121,10 +143,12 @@ async function main(): Promise<void> {
       console.log(
         `maestro v${VERSION}\n\n` +
           `usage:\n` +
+          `  maestro init                 write maestro.config.json + next steps\n` +
           `  maestro serve [--port N]     start the OpenAI-compatible server\n` +
           `  maestro route "<prompt>"     dry-run the router (no model call)\n` +
           `  maestro registry check       report registry staleness\n` +
-          `  maestro version              print version\n`,
+          `  maestro version              print version\n` +
+          `  (trace viewer at http://localhost:8080/ui when serving)\n`,
       );
   }
 }

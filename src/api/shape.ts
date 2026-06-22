@@ -45,6 +45,7 @@ export function maestroBlock(result: OrchestrationResult) {
     cost_usd: roundUsd(result.costUsd),
     cost_vs_frontier_only_usd: roundUsd(result.costVsFrontierOnlyUsd),
     savings_pct: Math.round(savings * 100),
+    cached: result.cached ?? false,
   };
 }
 

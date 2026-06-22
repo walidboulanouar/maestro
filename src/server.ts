@@ -62,6 +62,11 @@ export function createApp(deps: AppDeps): Hono {
     if (key && auth.budgetUsd > 0) spend.set(key, (spend.get(key) ?? 0) + usd);
   };
 
+  // --- dedupe cache (opt-in): identical requests skip the model call ---
+  const cache = new Map<string, import("./types.js").OrchestrationResult>();
+  const cacheKey = (req: { model: string; messages: unknown; response_format?: unknown; tools?: unknown }) =>
+    JSON.stringify({ m: req.model, msgs: req.messages, rf: req.response_format, tools: req.tools });
+
   app.get("/", (c) =>
     c.json({
       name: "maestro",
@@ -135,6 +140,15 @@ export function createApp(deps: AppDeps): Hono {
     return c.json({ ...t, maestro: maestroBlock(t) });
   });
 
+  // recent traces (for the UI)
+  app.get("/v1/traces", (c) => {
+    const n = Math.min(100, Number(c.req.query("limit") ?? 30) || 30);
+    return c.json({ data: trace.recent(n).map((t) => ({ id: t.id, ...maestroBlock(t), created: t.createdAt })) });
+  });
+
+  // minimal trace-viewer UI
+  app.get("/ui", (c) => c.html(TRACE_UI));
+
   // Anthropic Messages API — lets Claude Code use Maestro (ANTHROPIC_BASE_URL).
   app.post("/v1/messages", async (c) => {
     const raw = (await c.req.json().catch(() => ({}))) as AnthropicRequest;
@@ -182,6 +196,17 @@ export function createApp(deps: AppDeps): Hono {
     }
     const req = parsed.data;
 
+    const ckey = config.cacheEnabled && !req.stream ? cacheKey(req) : null;
+    if (ckey) {
+      const hit = cache.get(ckey);
+      if (hit) {
+        const served = { ...hit, cached: true };
+        for (const [k, v] of Object.entries(maestroHeaders(served))) c.header(k, v);
+        c.header("x-maestro-cached", "true");
+        return c.json(toOpenAIResponse(served, req.model));
+      }
+    }
+
     let result;
     try {
       result = await orchestrate(req, { config, registry, providers });
@@ -195,6 +220,7 @@ export function createApp(deps: AppDeps): Hono {
     }
     trace.record(result);
     charge(c, result.costUsd);
+    if (ckey) cache.set(ckey, result);
 
     if (!req.stream) {
       const headers = maestroHeaders(result);
@@ -247,3 +273,34 @@ function chunkText(text: string, size = 24): string[] {
 export function buildDeps(config: MaestroConfig, registry: AppDeps["registry"], providers: AppDeps["providers"]): AppDeps {
   return { config, registry, providers, trace: new TraceStore(200, config.traceFile, config.redactTraces) };
 }
+
+const TRACE_UI = `<!doctype html><html><head><meta charset="utf-8"/>
+<title>Maestro traces</title><style>
+*{box-sizing:border-box;margin:0;border-radius:0}
+body{background:#f3f2ec;color:#0a0a0a;font-family:ui-monospace,Menlo,monospace;padding:24px}
+h1{text-transform:uppercase;font-size:22px;border-bottom:4px solid #0a0a0a;padding-bottom:8px}
+.sub{color:#666;font-size:12px;margin:6px 0 18px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{border:2px solid #0a0a0a;padding:8px 10px;text-align:left}
+th{background:#0a0a0a;color:#f3f2ec;text-transform:uppercase}
+.acc{font-weight:700}.rev{color:#666}
+.empty{border:3px dashed #0a0a0a;padding:20px;text-align:center;color:#666;margin-top:12px}
+</style></head><body>
+<h1>Maestro &middot; traces</h1>
+<div class="sub">live routing decisions (auto-refresh 3s) &middot; redacted by default</div>
+<div id="out"><div class="empty">no requests yet, send one to /v1/chat/completions</div></div>
+<script>
+async function load(){
+  try{
+    const r=await fetch('/v1/traces?limit=40');const d=(await r.json()).data||[];
+    if(!d.length)return;
+    let h='<table><tr><th>when</th><th>mode</th><th>task</th><th>route</th><th>turns</th><th>cost $</th><th>saved</th><th>cached</th></tr>';
+    for(const t of d){
+      const route=(t.route||[]).map(x=>x.model.split('/').pop()+(x.verdict?(':'+x.verdict):'')).join(' → ');
+      h+='<tr><td>'+new Date(t.created).toLocaleTimeString()+'</td><td>'+t.mode+'</td><td>'+(t.classify?t.classify.task:'')+'</td><td>'+route+'</td><td>'+t.turns+'</td><td>'+t.cost_usd+'</td><td>'+t.savings_pct+'%</td><td>'+(t.cached?'yes':'')+'</td></tr>';
+    }
+    document.getElementById('out').innerHTML=h+'</table>';
+  }catch(e){}
+}
+load();setInterval(load,3000);
+</script></body></html>`;

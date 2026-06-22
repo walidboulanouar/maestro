@@ -95,6 +95,32 @@ describe("skip-verify when confident", () => {
   });
 });
 
+describe("dedupe cache + trace viewer", () => {
+  function app(env: Record<string, string>) {
+    const config = loadConfig(env);
+    return createApp(buildDeps(config, ModelRegistry.default(), new ProviderSet(config)));
+  }
+  it("serves an identical second request from cache", async () => {
+    const a = app({ MAESTRO_CACHE: "true" });
+    const body = { model: "maestro-auto", messages: [{ role: "user", content: "cache me please" }] };
+    const r1 = await a.request("/v1/chat/completions", json(body));
+    const b1 = (await r1.json()) as { maestro: { cached: boolean } };
+    const r2 = await a.request("/v1/chat/completions", json(body));
+    const b2 = (await r2.json()) as { maestro: { cached: boolean } };
+    expect(b1.maestro.cached).toBe(false);
+    expect(b2.maestro.cached).toBe(true);
+  });
+  it("lists recent traces and serves the UI", async () => {
+    const a = app({});
+    await a.request("/v1/chat/completions", json({ model: "maestro-auto", messages: [{ role: "user", content: "hi" }] }));
+    const list = (await (await a.request("/v1/traces")).json()) as { data: unknown[] };
+    expect(list.data.length).toBeGreaterThanOrEqual(1);
+    const ui = await a.request("/ui");
+    expect(ui.status).toBe(200);
+    expect((await ui.text())).toContain("Maestro");
+  });
+});
+
 describe("auth + rate limit", () => {
   function app(env: Record<string, string>) {
     const config = loadConfig(env);

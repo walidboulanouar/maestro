@@ -205,6 +205,8 @@ export interface OrchestrationResult {
    * (native_finish_reason, usage.cost, system_fingerprint, openrouter_metadata,
    * per-choice errors, …) aren't erased. Undefined for the mock provider. */
   upstreamRaw?: unknown;
+  /** True when this result was served from the dedupe cache (no model call). */
+  cached?: boolean;
 }
 
 export type Mode = "auto" | "fugu" | "ultra" | "passthrough";
