@@ -5,7 +5,7 @@ The plan for turning Maestro from a runnable v0.1 into the default open-source L
 > Status today: **v0.1 (early, ~5-hour build).** The core works and is tested live on real models. Not production-hardened. Everything below is what gets it there.
 
 > ### Shipped on the `roadmap` branch (built + tested)
-> Retries + transient fallback, per-request timeouts, **auth + rate-limit + budget**, trace redaction, latency skip-verify, **multi-provider** (Groq/Together/Fireworks/DeepInfra/OpenAI/custom), **orchestration profiles** (cheap/balanced/quality), **dedupe cache**, **trace-viewer UI** (`/ui`), `maestro init`, **prompt/version registry**, **`maestro-ultra`** decomposition, **executable code verifier**, **full Anthropic `tool_use` mapping**, **`npm run eval --report`** + rule-only baseline, and the **npm/ghcr release workflow**. Still needing a paid run / 2FA: the long-running agentic eval, true incremental streaming tool deltas, and the npm publish.
+> Retries + transient fallback, per-request timeouts, **auth + rate-limit + budget**, trace redaction, latency skip-verify, **multi-provider** (Groq/Together/Fireworks/DeepInfra/OpenAI/custom), **orchestration profiles** (cheap/balanced/quality), **dedupe cache**, **trace-viewer UI** (`/ui`), `maestro init`, **prompt/version registry**, **`maestro-ultra`** decomposition, **full Anthropic `tool_use` mapping**, **`npm run eval --report`** + rule-only baseline, and the **npm/ghcr release workflow**. Still needing a paid run / 2FA: the long-running agentic eval, true incremental streaming tool deltas, and the npm publish.
 
 ## North star
 
@@ -74,7 +74,7 @@ Done when: a new user goes from install to a tuned, cost-profiled deployment in 
 
 Goal: routing that is measurably better than naive baselines on real, hard work.
 
-- [ ] **Executable verifier** for code/tools: run the tests instead of asking an LLM (huge reliability win)
+- [ ] **Executable verifier** for code/tools: run the tests instead of asking an LLM (huge reliability win). MUST use a real sandbox (isolated-vm / a privilege-dropped subprocess / a container) - `node:vm` is NOT safe for untrusted model code and was removed for that reason.
 - [ ] **Embedding router:** semantic task classification beyond heuristics, with calibration
 - [ ] **Calibrated confidence:** gate escalation on a measured confidence signal (track ECE/Brier)
 - [ ] **Large, long-running, tool-calling agent eval:** success = task completion via tools, not text match (the real validation; budget a paid run)

@@ -17,10 +17,9 @@ Cheap-first, verify, escalate. Full cost and route transparency. Self-hostable. 
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A520-3c873a.svg)](package.json)
-[![tests](https://img.shields.io/badge/tests-43%20passing-brightgreen.svg)](test)
+[![tests](https://img.shields.io/badge/tests-72%20passing-brightgreen.svg)](test)
 [![status](https://img.shields.io/badge/status-v0.1%20early-orange.svg)](#roadmap)
-[![site](https://img.shields.io/badge/site-maestro.ayautomate.com-2b6fff.svg)](https://maestro.ayautomate.com)
-[![npm](https://img.shields.io/badge/npm-openmaestro-cb3837.svg)](https://www.npmjs.com/package/openmaestro)
+[![npm](https://img.shields.io/badge/npm-openmaestro%20(publishing%20soon)-lightgrey.svg)](https://github.com/walidboulanouar/maestro)
 
 </div>
 
@@ -49,11 +48,14 @@ Modern LLM stacks have a problem: the best model for a one-line translation is n
 Bring one provider key (OpenRouter unlocks the whole catalog), start the server, and point your OpenAI client at it:
 
 ```bash
+git clone https://github.com/walidboulanouar/maestro && cd maestro && npm install
+
 export OPENROUTER_API_KEY=sk-or-...     # one key, open + closed models (BYOK)
 # or AI_GATEWAY_API_KEY=...             # Vercel AI Gateway (also serves Fugu)
 # or LOCAL_OPENAI_BASE_URL=http://localhost:11434/v1   # Ollama / vLLM / llama.cpp, fully local
 
-npx openmaestro serve            # or: docker run -p 8080:8080 ghcr.io/youruser/maestro
+npm run serve                           # starts on :8080
+# npm package `openmaestro` is publishing soon; then this becomes: npx openmaestro serve
 ```
 
 ```bash
@@ -214,7 +216,7 @@ This is v0.1, a ~5-hour build. It works and is tested, but there is a lot of hea
 - [ ] Latency: run the verifier async, or skip it when the classifier is highly confident
 
 **Later (v1, smarter)**
-- [ ] Executable verifier for code/tools (run the tests, do not ask an LLM)
+- [ ] Executable verifier for code/tools (run the tests, do not ask an LLM) - in a real sandbox
 - [ ] Semantic cache; prompt/version registry; a tiny trace-viewer UI
 - [ ] Orchestration **profiles** (cheap / balanced / quality) + per-task best-model presets across ~40 models
 - [ ] Large, long-running, tool-calling agent eval (success = task completion, not text match)

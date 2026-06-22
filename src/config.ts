@@ -48,8 +48,6 @@ export interface MaestroConfig {
   redactTraces: boolean;
   /** Semantic/dedupe cache for identical-ish requests (off by default). */
   cacheEnabled: boolean;
-  /** Executable verifier for code answers (runs model code in a vm; off by default, experimental). */
-  codeVerify: boolean;
   forceMock: boolean;
   auth: AuthConfig;
 }
@@ -157,7 +155,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MaestroConfig 
     traceFile: env.MAESTRO_TRACE_FILE,
     redactTraces: bool(env.MAESTRO_REDACT_TRACES, true),
     cacheEnabled: bool(env.MAESTRO_CACHE, false),
-    codeVerify: bool(env.MAESTRO_CODE_VERIFY, false),
     forceMock: bool(env.MAESTRO_FORCE_MOCK, false),
     auth: {
       apiKeys: list(env.MAESTRO_API_KEYS),
