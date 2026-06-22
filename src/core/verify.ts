@@ -15,6 +15,7 @@ import type {
   Verdict,
 } from "../types.js";
 import { judgeDifficulty } from "./classify.js";
+import { extractCode, runJs } from "./code-verify.js";
 
 export interface VerifyOutcome {
   verdict: Verdict;
@@ -95,7 +96,21 @@ export async function verify(
   verifierModel: ModelSpec,
   providers: ProviderSet,
   deterministic: boolean,
+  codeVerify = false,
 ): Promise<VerifyOutcome> {
+  // Executable verifier: for code answers, run the code instead of asking an LLM.
+  if (codeVerify && sig.task === "code") {
+    const code = extractCode(answer);
+    if (code) {
+      const r = runJs(code);
+      return {
+        verdict: r.ok ? "ACCEPT" : "REVISE",
+        reason: r.ok ? "code executed cleanly" : `code error: ${r.error}`,
+        confidence: 0.9,
+        usage: { in: 0, out: 0 },
+      };
+    }
+  }
   if (deterministic || verifierModel.provider === "mock") {
     return mockVerdict(rung, judgeDifficulty(query));
   }

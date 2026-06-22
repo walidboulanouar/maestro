@@ -230,6 +230,7 @@ export async function orchestrate(
       verifierModel,
       providers,
       config.forceMock,
+      config.codeVerify,
     );
     if (v.usage.in + v.usage.out > 0) addUsage(verifierModel, v.usage);
     turnTrace.verdict = v.verdict;
