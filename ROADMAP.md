@@ -4,6 +4,9 @@ The plan for turning Maestro from a runnable v0.1 into the default open-source L
 
 > Status today: **v0.1 (early, ~5-hour build).** The core works and is tested live on real models. Not production-hardened. Everything below is what gets it there.
 
+> ### Shipped on the `roadmap` branch (built + tested)
+> Retries + transient fallback, per-request timeouts, **auth + rate-limit + budget**, trace redaction, latency skip-verify, **multi-provider** (Groq/Together/Fireworks/DeepInfra/OpenAI/custom), **orchestration profiles** (cheap/balanced/quality), **dedupe cache**, **trace-viewer UI** (`/ui`), `maestro init`, **prompt/version registry**, **`maestro-ultra`** decomposition, **executable code verifier**, **full Anthropic `tool_use` mapping**, **learned-router seam + training recipe** (sidecar), **`npm run eval --report`** + rule-only baseline, and the **npm/ghcr release workflow**. 75 tests. Still needing a GPU / paid run / 2FA: real learned-router weights, the long-running agentic eval, true incremental streaming tool deltas, and the npm publish.
+
 ## North star
 
 > One self-hostable, OpenAI- and Anthropic-compatible endpoint that routes every request to the right model, cheap-first with verify and escalate, and shows you the exact route and cost. Drop-in for any agent harness. Open, honest, no GPU.
