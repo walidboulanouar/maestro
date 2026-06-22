@@ -23,6 +23,8 @@ export interface OpenAICompatibleOptions {
   headers?: Record<string, string>;
   /** Per-request timeout in ms (default 120s) so a hung provider can't hang us. */
   timeoutMs?: number;
+  /** Retries on 429/5xx/timeout (default 2). */
+  maxRetries?: number;
 }
 
 /** Rough token estimate when a backend omits usage (≈4 chars/token). */
@@ -82,25 +84,39 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
     return err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
   }
 
-  async chat(params: ChatParams): Promise<ChatResult> {
-    let res: Response;
-    try {
-      res = await fetch(this.url(), {
-        method: "POST",
-        headers: this.headers(),
-        body: this.body(params, false),
-        signal: this.signalFor(params),
-      });
-    } catch (err) {
-      if (this.isTimeout(err)) {
-        throw new Error(`${this.name} request timed out after ${this.opts.timeoutMs ?? 120_000}ms`);
+  /** POST with retries on timeout / 429 / 5xx (exponential backoff). Returns an OK Response. */
+  private async fetchWithRetry(params: ChatParams): Promise<Response> {
+    const retries = this.opts.maxRetries ?? 2;
+    let lastErr = "";
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 250 * 2 ** (attempt - 1)));
+      let res: Response;
+      try {
+        res = await fetch(this.url(), {
+          method: "POST",
+          headers: this.headers(),
+          body: this.body(params, false),
+          signal: this.signalFor(params),
+        });
+      } catch (err) {
+        if (this.isTimeout(err)) {
+          lastErr = `${this.name} request timed out after ${this.opts.timeoutMs ?? 120_000}ms`;
+          continue; // retry timeouts
+        }
+        throw err;
       }
-      throw err;
-    }
-    if (!res.ok) {
+      if (res.ok) return res;
       const detail = await res.text().catch(() => "");
-      throw new Error(`${this.name} ${res.status}: ${detail.slice(0, 500)}`);
+      lastErr = `${this.name} ${res.status}: ${detail.slice(0, 300)}`;
+      // retry only transient statuses
+      if (res.status === 429 || res.status >= 500) continue;
+      throw new Error(lastErr);
     }
+    throw new Error(`${lastErr} (after ${retries} retries)`);
+  }
+
+  async chat(params: ChatParams): Promise<ChatResult> {
+    const res = await this.fetchWithRetry(params);
     const json = (await res.json()) as {
       choices?: { message?: { content?: string; tool_calls?: unknown[] }; finish_reason?: string }[];
       usage?: { prompt_tokens?: number; completion_tokens?: number };

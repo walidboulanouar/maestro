@@ -33,6 +33,35 @@ export function createApp(deps: AppDeps): Hono {
   const app = new Hono();
   const { config, registry, providers, trace } = deps;
 
+  // --- auth + rate limit + budget (all opt-in via config) ---
+  const rl = new Map<string, { n: number; t: number }>();
+  const spend = new Map<string, number>();
+  const auth = config.auth;
+  app.use("/v1/*", async (c, next) => {
+    if (auth.apiKeys.length === 0) return next(); // open by default
+    const key = (c.req.header("authorization") ?? "").replace(/^Bearer\s+/i, "");
+    if (!auth.apiKeys.includes(key)) {
+      return c.json({ error: { message: "invalid api key", type: "auth_error" } }, 401);
+    }
+    if (auth.rateLimitPerMin > 0) {
+      const now = Date.now();
+      const w = rl.get(key);
+      if (!w || now - w.t > 60_000) rl.set(key, { n: 1, t: now });
+      else if (++w.n > auth.rateLimitPerMin) {
+        return c.json({ error: { message: "rate limit exceeded", type: "rate_limit_error" } }, 429);
+      }
+    }
+    if (auth.budgetUsd > 0 && (spend.get(key) ?? 0) >= auth.budgetUsd) {
+      return c.json({ error: { message: "budget exceeded", type: "budget_error" } }, 402);
+    }
+    c.set("apiKey" as never, key as never);
+    await next();
+  });
+  const charge = (c: { get: (k: never) => unknown }, usd: number) => {
+    const key = c.get("apiKey" as never) as string | undefined;
+    if (key && auth.budgetUsd > 0) spend.set(key, (spend.get(key) ?? 0) + usd);
+  };
+
   app.get("/", (c) =>
     c.json({
       name: "maestro",
@@ -121,6 +150,7 @@ export function createApp(deps: AppDeps): Hono {
       return c.json({ type: "error", error: { type: "api_error", message } }, 502);
     }
     trace.record(result);
+    charge(c, result.costUsd);
 
     if (!raw.stream) {
       for (const [k, v] of Object.entries(maestroHeaders(result))) c.header(k, v);
@@ -164,6 +194,7 @@ export function createApp(deps: AppDeps): Hono {
       );
     }
     trace.record(result);
+    charge(c, result.costUsd);
 
     if (!req.stream) {
       const headers = maestroHeaders(result);
@@ -214,5 +245,5 @@ function chunkText(text: string, size = 24): string[] {
 }
 
 export function buildDeps(config: MaestroConfig, registry: AppDeps["registry"], providers: AppDeps["providers"]): AppDeps {
-  return { config, registry, providers, trace: new TraceStore(200, config.traceFile) };
+  return { config, registry, providers, trace: new TraceStore(200, config.traceFile, config.redactTraces) };
 }

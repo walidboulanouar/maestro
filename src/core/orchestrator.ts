@@ -144,6 +144,12 @@ export async function orchestrate(
     config.verifierModel,
   );
 
+  // Latency optimization: skip the verify round-trip when the classifier is very
+  // confident (configurable; 0 disables).
+  const effectiveVerify =
+    verifyEnabled &&
+    !(config.skipVerifyAboveConfidence > 0 && signature.confidence >= config.skipVerifyAboveConfidence);
+
   // Run the loop.
   const trace: TurnTrace[] = [];
   const usageByModel: Record<string, TokenUsage> = {};
@@ -205,7 +211,7 @@ export async function orchestrate(
       break;
     }
 
-    if (!verifyEnabled) {
+    if (!effectiveVerify) {
       trace.push(turnTrace);
       break;
     }
