@@ -11,6 +11,8 @@ Cheap-first, verify, escalate. Full cost & route transparency. Self-hostable. MI
 
 *Open-source Fugu: open, honest, EU-clean, runs anywhere, and not locked to three closed models.*
 
+> **The one thing no other open-source project does:** Maestro is the only open-source LLM router you can run with **zero setup — no GPU, no keys** (`npx maestro serve`) that is **both OpenAI- *and* Anthropic-compatible** (works in Claude Code *and* opencode) with **per-request cost transparency** and a **reproducible benchmark**. OpenFugu needs a GPU and ships a *mock* benchmark; LoRA-Harness ships none. See [COMPARISON.md](COMPARISON.md).
+
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A520-3c873a.svg)](package.json)
 [![tests](https://img.shields.io/badge/tests-28%20passing-brightgreen.svg)](test)

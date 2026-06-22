@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maestro — the open-source version of Fugu</title>
+<meta name="description" content="Open-source Fugu. An LLM routing brain: route any models behind one OpenAI/Anthropic-compatible endpoint, cheap-first with verify/escalate and full cost transparency. Self-hostable. MIT." />
+<style>
+  :root{ --paper:#f5f2e8; --ink:#0a0a0a; --yellow:#ffe600; --pink:#ff3b3b; --green:#00cc44; --blue:#2b6fff; }
+  *{ box-sizing:border-box; border-radius:0 !important; }
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; line-height:1.5; }
+  .wrap{ max-width:980px; margin:0 auto; padding:28px 18px 90px; }
+  h1{ font-size:clamp(40px,8vw,76px); font-weight:900; letter-spacing:-2px; margin:6px 0; text-transform:uppercase; line-height:.95; }
+  h2{ font-size:26px; font-weight:900; text-transform:uppercase; margin:34px 0 6px; border-bottom:5px solid var(--ink); display:inline-block; }
+  .tag{ display:inline-block; background:var(--ink); color:var(--yellow); padding:6px 12px; font-weight:900; text-transform:uppercase; transform:rotate(-1deg); }
+  .lead{ font-size:18px; max-width:680px; }
+  .box{ background:#fff; border:5px solid var(--ink); box-shadow:9px 9px 0 var(--ink); padding:18px; margin:18px 0; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
+  .cell{ border:4px solid var(--ink); padding:14px; background:#fff; }
+  .cell b{ display:block; font-size:15px; text-transform:uppercase; background:var(--yellow); padding:2px 6px; margin:-4px -4px 8px; }
+  pre{ background:var(--ink); color:#eee; padding:14px; overflow:auto; font-size:13px; }
+  code{ background:var(--yellow); padding:1px 5px; font-weight:700; }
+  .pipe{ display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; font-weight:900; }
+  .pipe div{ border:4px solid var(--ink); padding:10px 12px; background:var(--paper); flex:1; min-width:120px; text-align:center; }
+  .pipe .arrow{ flex:0; border:0; display:flex; align-items:center; font-size:24px; padding:0 2px; }
+  .big{ font-size:42px; font-weight:900; }
+  .stat{ border:4px solid var(--ink); padding:14px; text-align:center; background:var(--yellow); }
+  table{ border-collapse:collapse; width:100%; font-size:14px; }
+  th,td{ border:3px solid var(--ink); padding:8px 10px; text-align:left; }
+  th{ background:var(--ink); color:var(--yellow); text-transform:uppercase; }
+  .yes{ color:var(--green); font-weight:900; } .no{ color:var(--pink); font-weight:900; }
+  a.btn{ display:inline-block; text-decoration:none; font-weight:900; text-transform:uppercase; border:5px solid var(--ink);
+         background:var(--yellow); color:var(--ink); padding:14px 24px; box-shadow:7px 7px 0 var(--ink); margin:6px 8px 6px 0; }
+  a.btn.blue{ background:var(--blue); color:#fff; }
+  a{ color:var(--blue); font-weight:900; }
+  footer{ margin-top:40px; border-top:5px solid var(--ink); padding-top:14px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="tag">🐡 open-source fugu</span>
+  <h1>Maestro</h1>
+  <p class="lead"><b>The open-source version of Sakana's Fugu.</b> An LLM <b>routing brain</b>: point your OpenAI or Anthropic client at it, and every request goes to the right model — cheap-first, verified, escalated only when needed — with the full route and cost shown. Self-hostable. MIT.</p>
+  <div>
+    <a class="btn" href="https://github.com/walidboulanouar/maestro">⭐ Star on GitHub</a>
+    <a class="btn blue" href="#start">Try in 30s</a>
+  </div>
+
+  <h2>The problem</h2>
+  <div class="box">The best model for a one-line translation is <i>not</i> the best model for a distributed-systems design — but you pay frontier prices for both. Maestro sends the easy stuff to cheap models and only the hard stuff to the expensive ones, automatically.</div>
+
+  <h2>How it works</h2>
+  <div class="box">
+    <div class="pipe">
+      <div>CLASSIFY<br><small>task · difficulty</small></div><div class="arrow">→</div>
+      <div>ROUTE<br><small>cheap→strong ladder</small></div><div class="arrow">→</div>
+      <div>EXECUTE<br><small>via any gateway</small></div><div class="arrow">→</div>
+      <div>VERIFY<br><small>accept / revise</small></div><div class="arrow">↺</div>
+      <div>ANSWER<br><small>+ route + cost</small></div>
+    </div>
+    <p style="margin-bottom:0">A cheap model tries first. A <b>verifier</b> checks the answer. If it's not good enough, Maestro <b>escalates</b> to a stronger model (up to a turn limit). Built from the two Fugu papers — <a href="https://github.com/walidboulanouar/maestro/tree/main/papers">TRINITY + Conductor</a>.</p>
+  </div>
+
+  <h2>The numbers</h2>
+  <p style="max-width:680px">On the bundled, reproducible benchmark (<code>npm run eval</code>, offline & deterministic):</p>
+  <div class="grid">
+    <div class="stat"><div class="big">94%</div>of best-single quality</div>
+    <div class="stat"><div class="big">91%</div>lower cost</div>
+    <div class="stat"><div class="big">11×</div>more answers per $</div>
+  </div>
+  <p><small>Honest: it's not a model and doesn't claim to beat one. It <i>uses</i> the best models, cheaper. It even shows its one failure. Reproduce it yourself.</small></p>
+
+  <h2 id="start">Try it in 30 seconds</h2>
+  <div class="box">
+    <p>Runs with <b>zero API keys</b> (built-in mock provider):</p>
+    <pre>npx maestro serve
+curl -s localhost:8080/v1/chat/completions -H 'content-type: application/json' \
+  -d '{"model":"maestro-auto","messages":[{"role":"user","content":"hello"}]}' | jq .maestro</pre>
+    <p>Add a key for real models — your OpenAI code doesn't change, just the base URL:</p>
+    <pre>export OPENROUTER_API_KEY=sk-or-...     # open + closed, BYOK
+# or LOCAL_OPENAI_BASE_URL=http://localhost:11434/v1   # Ollama/vLLM — 100% offline</pre>
+  </div>
+
+  <h2>Use it in your agent</h2>
+  <div class="grid">
+    <div class="cell"><b>Claude Code</b><pre>ANTHROPIC_BASE_URL=http://localhost:8080 \
+ANTHROPIC_API_KEY=unused claude</pre></div>
+    <div class="cell"><b>opencode / Cursor</b><pre>baseURL: http://localhost:8080/v1
+model:   maestro-auto</pre></div>
+  </div>
+
+  <h2>vs the other open-source attempts</h2>
+  <table>
+    <tr><th></th><th>Maestro</th><th>OpenFugu</th><th>LoRA-Harness</th></tr>
+    <tr><td>Runs with no GPU / no keys</td><td class="yes">YES</td><td class="no">no</td><td class="no">no</td></tr>
+    <tr><td>Any provider (open + closed)</td><td class="yes">YES</td><td>research pool</td><td class="no">LoRA only</td></tr>
+    <tr><td>OpenAI + Anthropic API</td><td class="yes">YES</td><td>partial</td><td>OpenAI</td></tr>
+    <tr><td>Honest reproducible benchmark</td><td class="yes">YES</td><td class="no">mock +107%</td><td class="no">none</td></tr>
+    <tr><td>Per-request cost transparency</td><td class="yes">YES</td><td class="no">no</td><td class="no">no</td></tr>
+  </table>
+  <p><small>Fair: OpenFugu reproduces Fugu's actual <i>learned</i> router (our roadmap v2); LoRA-Harness solves a different (LoRA-serving) problem. Details: <a href="https://github.com/walidboulanouar/maestro/blob/main/COMPARISON.md">COMPARISON.md</a>.</small></p>
+
+  <div class="box" style="background:var(--yellow); text-align:center; margin-top:30px;">
+    <div style="font-weight:900; font-size:22px; text-transform:uppercase">The open-source Fugu you can actually run.</div>
+    <a class="btn" href="https://github.com/walidboulanouar/maestro">⭐ github.com/walidboulanouar/maestro</a>
+  </div>
+
+  <footer>
+    MIT · not affiliated with Sakana AI · built from the public TRINITY (2512.04695) &amp; Conductor (2512.04388) papers.
+    Verify it yourself: <code>bash scripts/verify.sh</code> · open <a href="https://github.com/walidboulanouar/maestro/blob/main/test.html">test.html</a>.
+  </footer>
+</div>
+</body>
+</html>
