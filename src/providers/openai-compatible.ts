@@ -21,6 +21,8 @@ export interface OpenAICompatibleOptions {
   requireKey: boolean;
   /** Extra headers (e.g. OpenRouter ranking headers). */
   headers?: Record<string, string>;
+  /** Per-request timeout in ms (default 120s) so a hung provider can't hang us. */
+  timeoutMs?: number;
 }
 
 /** Rough token estimate when a backend omits usage (≈4 chars/token). */
@@ -49,15 +51,20 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
   }
 
   private body(params: ChatParams, stream: boolean): string {
-    const body: Record<string, unknown> = {
-      model: params.model,
-      messages: params.messages,
-      stream,
-    };
-    if (params.temperature !== undefined) body["temperature"] = params.temperature;
-    if (params.maxTokens !== undefined) body["max_tokens"] = params.maxTokens;
-    if (params.effort) body["reasoning_effort"] = params.effort;
-    if (stream) body["stream_options"] = { include_usage: true };
+    // Start from ALL forwarded request fields, then override only what Maestro
+    // owns. This keeps response_format, provider, seed, tools, tool_choice,
+    // session_id, metadata, trace, plugins, reasoning, etc. fully intact.
+    const body: Record<string, unknown> = { ...(params.extra ?? {}) };
+    body["model"] = params.model;
+    body["messages"] = params.messages;
+    body["stream"] = stream;
+    // Only inject effort for routed modes, and never clobber a caller's reasoning.
+    if (params.effort && body["reasoning_effort"] === undefined && body["reasoning"] === undefined) {
+      body["reasoning_effort"] = params.effort;
+    }
+    if (stream && body["stream_options"] === undefined) {
+      body["stream_options"] = { include_usage: true };
+    }
     return JSON.stringify(body);
   }
 
@@ -65,36 +72,66 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
     return `${this.opts.baseUrl!.replace(/\/$/, "")}/chat/completions`;
   }
 
+  /** Caller's signal combined with a timeout, so requests never hang forever. */
+  private signalFor(params: ChatParams): AbortSignal {
+    const timeout = AbortSignal.timeout(this.opts.timeoutMs ?? 120_000);
+    return params.signal ? AbortSignal.any([params.signal, timeout]) : timeout;
+  }
+
+  private isTimeout(err: unknown): boolean {
+    return err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
+  }
+
   async chat(params: ChatParams): Promise<ChatResult> {
-    const res = await fetch(this.url(), {
-      method: "POST",
-      headers: this.headers(),
-      body: this.body(params, false),
-      signal: params.signal ?? null,
-    });
+    let res: Response;
+    try {
+      res = await fetch(this.url(), {
+        method: "POST",
+        headers: this.headers(),
+        body: this.body(params, false),
+        signal: this.signalFor(params),
+      });
+    } catch (err) {
+      if (this.isTimeout(err)) {
+        throw new Error(`${this.name} request timed out after ${this.opts.timeoutMs ?? 120_000}ms`);
+      }
+      throw err;
+    }
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
       throw new Error(`${this.name} ${res.status}: ${detail.slice(0, 500)}`);
     }
     const json = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
+      choices?: { message?: { content?: string; tool_calls?: unknown[] }; finish_reason?: string }[];
       usage?: { prompt_tokens?: number; completion_tokens?: number };
     };
-    const text = json.choices?.[0]?.message?.content ?? "";
+    const choice = json.choices?.[0];
+    const text = choice?.message?.content ?? "";
     const usage: TokenUsage = {
       in: json.usage?.prompt_tokens ?? estimateInput(params),
       out: json.usage?.completion_tokens ?? estimateTokens(text),
     };
-    return { text, usage };
+    const result: ChatResult = { text, usage, raw: json };
+    if (choice?.message?.tool_calls?.length) result.toolCalls = choice.message.tool_calls;
+    if (choice?.finish_reason) result.finishReason = choice.finish_reason;
+    return result;
   }
 
   async *stream(params: ChatParams): AsyncIterable<StreamChunk> {
-    const res = await fetch(this.url(), {
-      method: "POST",
-      headers: this.headers(),
-      body: this.body(params, true),
-      signal: params.signal ?? null,
-    });
+    let res: Response;
+    try {
+      res = await fetch(this.url(), {
+        method: "POST",
+        headers: this.headers(),
+        body: this.body(params, true),
+        signal: this.signalFor(params),
+      });
+    } catch (err) {
+      if (this.isTimeout(err)) {
+        throw new Error(`${this.name} request timed out after ${this.opts.timeoutMs ?? 120_000}ms`);
+      }
+      throw err;
+    }
     if (!res.ok || !res.body) {
       const detail = res.ok ? "no body" : await res.text().catch(() => "");
       throw new Error(`${this.name} ${res.status}: ${detail.slice(0, 500)}`);

@@ -102,7 +102,6 @@ export async function verify(
   const adapter = providers.get(verifierModel.provider);
   const res = await adapter.chat({
     model: verifierModel.id,
-    temperature: 0,
     messages: [
       { role: "system", content: VERIFIER_SYSTEM },
       {
@@ -111,6 +110,7 @@ export async function verify(
           `DIFFICULTY=${sig.difficulty.toFixed(2)}\n\nTASK:\n${query}\n\nANSWER:\n${answer}`,
       },
     ],
+    extra: { temperature: 0 },
   });
   const parsed = parseVerifierJson(res.text);
   return { ...parsed, usage: res.usage };

@@ -20,9 +20,13 @@ export class ProviderSet {
         baseUrl: config.providers.openrouter.baseUrl,
         apiKey: config.providers.openrouter.apiKey,
         requireKey: true,
+        timeoutMs: config.requestTimeoutMs,
         headers: {
-          "HTTP-Referer": "https://github.com/maestro",
+          "HTTP-Referer": "https://maestro.ayautomate.com",
           "X-Title": "Maestro",
+          "X-OpenRouter-Title": "Maestro",
+          // surface routing metadata in `openrouter_metadata` on responses
+          "X-OpenRouter-Metadata": "enabled",
         },
       }),
     );
@@ -32,6 +36,7 @@ export class ProviderSet {
         baseUrl: config.providers.vercelGateway.baseUrl,
         apiKey: config.providers.vercelGateway.apiKey,
         requireKey: true,
+        timeoutMs: config.requestTimeoutMs,
       }),
     );
     this.map.set(
@@ -40,6 +45,7 @@ export class ProviderSet {
         baseUrl: config.providers.localOpenai.baseUrl,
         apiKey: config.providers.localOpenai.apiKey,
         requireKey: false,
+        timeoutMs: config.requestTimeoutMs,
       }),
     );
   }

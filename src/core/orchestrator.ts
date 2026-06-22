@@ -25,7 +25,7 @@ import type {
 import { classify } from "./classify.js";
 import { costOf } from "./cost.js";
 import { route, type RouteContext } from "./route.js";
-import { totalChars } from "./transcript.js";
+import { contentToText, totalChars } from "./transcript.js";
 import { chooseVerifier, verify } from "./verify.js";
 
 export interface OrchestratorDeps {
@@ -97,7 +97,12 @@ export async function orchestrate(
   const hint = req.maestro;
   const pin = hint?.pin ?? modelPin;
   const maxTurns = hint?.maxTurns ?? config.maxTurns;
-  const verifyEnabled = mode !== "passthrough" && (hint?.verify ?? config.verifyByDefault);
+  // When the request carries tools, behave as a transparent proxy: route to a
+  // capable model and pass the model's output (tool_calls or text) straight back,
+  // with no verify/escalate loop (re-running mid tool-call would break the agent).
+  const hasTools = Array.isArray(req.tools) && req.tools.length > 0;
+  const verifyEnabled =
+    mode !== "passthrough" && !hasTools && (hint?.verify ?? config.verifyByDefault);
 
   const configured = providers.configuredNames();
   const pool = registry.available(configured);
@@ -142,8 +147,15 @@ export async function orchestrate(
   // Run the loop.
   const trace: TurnTrace[] = [];
   const usageByModel: Record<string, TokenUsage> = {};
+  // Everything except the fields Maestro owns is forwarded to the model verbatim.
+  const reqRecord = req as unknown as Record<string, unknown>;
+  const { model: _m, messages: _msgs, stream: _s, maestro: _mae, ...extra } = reqRecord;
+
   let answer = "";
   let costUsd = 0;
+  let toolCalls: unknown[] | undefined;
+  let finishReason = "stop";
+  let upstreamRaw: unknown;
 
   const addUsage = (model: ModelSpec, usage: TokenUsage) => {
     const prev = usageByModel[model.id] ?? { in: 0, out: 0 };
@@ -160,12 +172,16 @@ export async function orchestrate(
     const result = await adapter.chat({
       model: rung.model.id,
       messages,
-      effort: rung.effort,
-      temperature: req.temperature ?? 0,
-      maxTokens: req.max_tokens,
+      // Maestro owns effort only for routed modes; in passthrough we preserve
+      // whatever reasoning params the caller sent.
+      ...(mode === "passthrough" ? {} : { effort: rung.effort }),
+      // Forward EVERY other request field verbatim (tools, tool_choice,
+      // response_format, provider, seed, session_id, metadata, trace, …).
+      extra,
     });
     const ms = Date.now() - started;
     answer = result.text;
+    if (result.raw !== undefined) upstreamRaw = result.raw;
     addUsage(rung.model, result.usage);
 
     const turnTrace: TurnTrace = {
@@ -179,6 +195,15 @@ export async function orchestrate(
       costUsd: costOf(rung.model, result.usage),
       ms,
     };
+
+    // Tool calls are terminal: the client must execute the tool and call back.
+    // We don't verify/escalate a tool-call turn.
+    if (result.toolCalls?.length) {
+      toolCalls = result.toolCalls;
+      finishReason = "tool_calls";
+      trace.push(turnTrace);
+      break;
+    }
 
     if (!verifyEnabled) {
       trace.push(turnTrace);
@@ -222,12 +247,15 @@ export async function orchestrate(
     costUsd,
     costVsFrontierOnlyUsd,
     createdAt: Date.now(),
+    ...(toolCalls ? { toolCalls } : {}),
+    finishReason,
+    ...(upstreamRaw !== undefined ? { upstreamRaw } : {}),
   };
 }
 
 function lastUserOf(messages: ChatMessage[]): string {
   for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i]?.role === "user") return messages[i]!.content;
+    if (messages[i]?.role === "user") return contentToText(messages[i]!.content);
   }
-  return messages[messages.length - 1]?.content ?? "";
+  return contentToText(messages[messages.length - 1]?.content);
 }

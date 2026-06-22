@@ -7,6 +7,7 @@
  * vs the task difficulty (see `core/verify.ts`), which makes the cheap→frontier
  * escalation deterministic and visible in the demo.
  */
+import { contentToText } from "../core/transcript.js";
 import type {
   ChatParams,
   ChatResult,
@@ -18,9 +19,9 @@ import type {
 function lastUser(params: ChatParams): string {
   for (let i = params.messages.length - 1; i >= 0; i--) {
     const m = params.messages[i];
-    if (m && m.role === "user") return m.content;
+    if (m && m.role === "user") return contentToText(m.content);
   }
-  return params.messages[params.messages.length - 1]?.content ?? "";
+  return contentToText(params.messages[params.messages.length - 1]?.content);
 }
 
 function tierLabel(model: string): string {

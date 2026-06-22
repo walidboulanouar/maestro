@@ -14,6 +14,8 @@ export interface MaestroConfig {
   /** Difficulty thresholds for tier selection. */
   thresholds: { low: number; high: number };
   verifyByDefault: boolean;
+  /** Per-request upstream timeout in ms (so a slow/hung provider can't hang us). */
+  requestTimeoutMs: number;
   /** Model used for the optional LLM classifier / verifier (a registry slot or id). */
   verifierModel: string;
   providers: {
@@ -49,6 +51,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MaestroConfig 
       high: num(env.MAESTRO_DIFFICULTY_HIGH, 0.7),
     },
     verifyByDefault: bool(env.MAESTRO_VERIFY, true),
+    requestTimeoutMs: num(env.MAESTRO_REQUEST_TIMEOUT_MS, 120_000),
     verifierModel: env.MAESTRO_VERIFIER_MODEL ?? "auto",
     providers: {
       openrouter: {

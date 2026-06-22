@@ -13,11 +13,21 @@ import { z } from "zod";
 export const RoleSchema = z.enum(["system", "user", "assistant", "tool"]);
 export type Role = z.infer<typeof RoleSchema>;
 
-export const ChatMessageSchema = z.object({
-  role: RoleSchema,
-  content: z.string(),
-  name: z.string().optional(),
-});
+/**
+ * OpenAI-compatible message. Tool loops require more than `content: string`:
+ * assistant turns can have `content: null` + `tool_calls`, tool results carry
+ * `tool_call_id`, and content may be a multimodal array. We accept all of these
+ * and pass them through to the model unchanged (Maestro is a transparent proxy).
+ */
+export const ChatMessageSchema = z
+  .object({
+    role: RoleSchema,
+    content: z.union([z.string(), z.null(), z.array(z.any())]).optional(),
+    name: z.string().optional(),
+    tool_call_id: z.string().optional(),
+    tool_calls: z.array(z.any()).optional(),
+  })
+  .passthrough();
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 
 /** Maestro's optional routing hint, accepted as an extra field on the request. */
@@ -46,6 +56,8 @@ export const ChatCompletionRequestSchema = z
     stream: z.boolean().optional(),
     temperature: z.number().min(0).max(2).optional(),
     max_tokens: z.number().int().positive().optional(),
+    tools: z.array(z.any()).optional(),
+    tool_choice: z.any().optional(),
     maestro: MaestroHintSchema.optional(),
   })
   .passthrough();
@@ -70,13 +82,14 @@ export const CapabilitySchema = z.enum([
 ]);
 export type Capability = z.infer<typeof CapabilitySchema>;
 
-export const ProviderNameSchema = z.enum([
-  "openrouter",
-  "vercel-gateway",
-  "local-openai",
-  "mock",
-]);
-export type ProviderName = z.infer<typeof ProviderNameSchema>;
+/**
+ * Provider name. A free-form string so Maestro works with ANY OpenAI-compatible
+ * router/provider. Built-ins: openrouter, vercel-gateway, openai, groq, together,
+ * fireworks, deepinfra, local-openai, mock — plus any you define in config
+ * (`MAESTRO_PROVIDERS`). The string maps to a base URL + key at runtime.
+ */
+export const ProviderNameSchema = z.string();
+export type ProviderName = string;
 
 export const ModelSpecSchema = z.object({
   /** Abstract, remappable slot label (OpenFugu: slots are metadata). */
@@ -185,6 +198,13 @@ export interface OrchestrationResult {
   costUsd: number;
   costVsFrontierOnlyUsd: number;
   createdAt: number;
+  /** Present when the final turn returned tool calls instead of a text answer. */
+  toolCalls?: unknown[];
+  finishReason: string;
+  /** Raw upstream response of the final turn — preserved so provider fields
+   * (native_finish_reason, usage.cost, system_fingerprint, openrouter_metadata,
+   * per-choice errors, …) aren't erased. Undefined for the mock provider. */
+  upstreamRaw?: unknown;
 }
 
 export type Mode = "auto" | "fugu" | "ultra" | "passthrough";
@@ -197,14 +217,25 @@ export interface ChatParams {
   model: string;
   messages: ChatMessage[];
   effort?: string;
-  temperature?: number;
-  maxTokens?: number;
   signal?: AbortSignal;
+  /**
+   * Every other OpenAI/OpenRouter request field (response_format, provider,
+   * seed, top_p, tools, tool_choice, session_id, metadata, trace, plugins,
+   * parallel_tool_calls, reasoning, …) — forwarded to the model VERBATIM.
+   * Maestro only overrides `model`/`messages` (and `reasoning_effort` for routed
+   * modes); everything else passes through untouched.
+   */
+  extra?: Record<string, unknown>;
 }
 
 export interface ChatResult {
   text: string;
   usage: TokenUsage;
+  /** OpenAI tool_calls, when the model decided to call a tool. */
+  toolCalls?: unknown[];
+  finishReason?: string;
+  /** The raw upstream response JSON, so we can preserve provider-specific fields. */
+  raw?: unknown;
 }
 
 export interface StreamChunk {

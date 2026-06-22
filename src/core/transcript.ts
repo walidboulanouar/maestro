@@ -8,18 +8,36 @@
  */
 import type { ChatMessage } from "../types.js";
 
+/** Flatten OpenAI message content (string | null | multimodal array) to text. */
+export function contentToText(content: unknown): string {
+  if (typeof content === "string") return content;
+  if (content == null) return "";
+  if (Array.isArray(content)) {
+    return content
+      .map((part) =>
+        typeof part === "string"
+          ? part
+          : part && typeof part === "object" && "text" in part
+            ? String((part as { text?: unknown }).text ?? "")
+            : "",
+      )
+      .join(" ");
+  }
+  return String(content);
+}
+
 export function toRawTranscript(messages: ChatMessage[]): string {
-  return messages.map((m) => `${m.role}: ${m.content}`).join("\n");
+  return messages.map((m) => `${m.role}: ${contentToText(m.content)}`).join("\n");
 }
 
 export function lastUserMessage(messages: ChatMessage[]): string {
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i];
-    if (m && m.role === "user") return m.content;
+    if (m && m.role === "user") return contentToText(m.content);
   }
-  return messages[messages.length - 1]?.content ?? "";
+  return contentToText(messages[messages.length - 1]?.content);
 }
 
 export function totalChars(messages: ChatMessage[]): number {
-  return messages.reduce((sum, m) => sum + m.content.length, 0);
+  return messages.reduce((sum, m) => sum + contentToText(m.content).length, 0);
 }

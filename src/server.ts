@@ -157,7 +157,11 @@ export function createApp(deps: AppDeps): Hono {
       result = await orchestrate(req, { config, registry, providers });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      return c.json({ error: { message, type: "upstream_error" } }, 502);
+      const timedOut = /timed out/i.test(message);
+      return c.json(
+        { error: { message, type: timedOut ? "timeout_error" : "upstream_error" } },
+        timedOut ? 504 : 502,
+      );
     }
     trace.record(result);
 
@@ -184,10 +188,15 @@ export function createApp(deps: AppDeps): Hono {
           data: JSON.stringify({ ...base, choices: [{ index: 0, delta: { content: piece } }] }),
         });
       }
+      if (result.toolCalls) {
+        await stream.writeSSE({
+          data: JSON.stringify({ ...base, choices: [{ index: 0, delta: { tool_calls: result.toolCalls } }] }),
+        });
+      }
       await stream.writeSSE({
         data: JSON.stringify({
           ...base,
-          choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
+          choices: [{ index: 0, delta: {}, finish_reason: result.finishReason ?? "stop" }],
           maestro: maestroBlock(result),
         }),
       });

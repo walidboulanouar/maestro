@@ -49,6 +49,18 @@ export function maestroBlock(result: OrchestrationResult) {
 }
 
 export function toOpenAIResponse(result: OrchestrationResult, requestedModel: string) {
+  // Preserve the upstream provider response verbatim (native_finish_reason,
+  // usage.cost, system_fingerprint, openrouter_metadata, per-choice errors,
+  // tool_calls, …) and only add the non-breaking `maestro` block. We fall back
+  // to a reconstructed response only when there is no upstream (e.g. mock).
+  if (
+    result.upstreamRaw &&
+    typeof result.upstreamRaw === "object" &&
+    "choices" in (result.upstreamRaw as Record<string, unknown>)
+  ) {
+    return { ...(result.upstreamRaw as Record<string, unknown>), maestro: maestroBlock(result) };
+  }
+
   const usage = totalUsage(result);
   return {
     id: result.id,
@@ -58,8 +70,13 @@ export function toOpenAIResponse(result: OrchestrationResult, requestedModel: st
     choices: [
       {
         index: 0,
-        message: { role: "assistant", content: result.answer },
-        finish_reason: "stop",
+        message: {
+          role: "assistant",
+          // OpenAI convention: content is null when the model returns tool_calls.
+          content: result.toolCalls ? (result.answer || null) : result.answer,
+          ...(result.toolCalls ? { tool_calls: result.toolCalls } : {}),
+        },
+        finish_reason: result.finishReason ?? "stop",
       },
     ],
     usage: {
