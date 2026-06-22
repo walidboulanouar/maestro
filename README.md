@@ -7,7 +7,9 @@
 **Route any models — open *and* closed — behind one OpenAI-compatible endpoint.
 Cheap-first, verify, escalate. Full cost & route transparency. Self-hostable. MIT.**
 
-*Sakana Fugu, but open, honest, EU-clean, and not locked to three models.*
+### 🐡 Maestro is the open-source version of [Sakana's Fugu](https://sakana.ai/fugu-release/) — built from the two papers: [TRINITY](papers/) (2512.04695) + [Conductor](papers/) (2512.04388).
+
+*Open-source Fugu: open, honest, EU-clean, runs anywhere, and not locked to three closed models.*
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A520-3c873a.svg)](package.json)
@@ -71,6 +73,29 @@ export OPENROUTER_API_KEY=sk-or-...     # open + closed models, BYOK
 
 Want the full demo with **real prices but no spend**? `MAESTRO_FORCE_MOCK=true npx maestro serve` routes over the priced registry and executes on the mock provider.
 
+## Use it in your coding agent
+
+Maestro speaks **both** the OpenAI *and* the Anthropic wire formats, so it drops into the popular agents:
+
+**Claude Code** (Maestro exposes `/v1/messages`):
+```bash
+ANTHROPIC_BASE_URL=http://localhost:8080 ANTHROPIC_API_KEY=unused claude
+```
+
+**opencode / Cursor / Continue / any OpenAI-compatible tool** — point the base URL at Maestro and use model `maestro-auto`:
+```jsonc
+// opencode.json
+{ "provider": { "maestro": { "npm": "@ai-sdk/openai-compatible",
+  "options": { "baseURL": "http://localhost:8080/v1" },
+  "models": { "maestro-auto": {} } } } }
+```
+
+Your agent now routes every call across your whole pool, cheap-first, with the cost shown — no code change.
+
+## Swap in your own models
+
+The model pool is **100% yours** — it's just a dated JSON registry of `ModelSpec`s. Copy [`maestro.config.example.json`](maestro.config.example.json), edit it, and run with `MAESTRO_REGISTRY=./maestro.config.json`. Slot labels are abstract and remappable (the key lesson from Fugu): the router reasons over slots/tiers, you map them to any model id on any provider — **no retraining, no code change.** Mix open + closed + your local Ollama models freely, and only ship the **newest** models (the defaults track the current frontier and are dated so `maestro registry check` nags when they go stale).
+
 ## Why Maestro
 
 | | **Maestro** | Sakana Fugu | Raw gateway (OpenRouter/Vercel) |
@@ -129,6 +154,7 @@ calibration (classifier confidence vs first-rung-correct):
 | Method | Path | Purpose |
 |---|---|---|
 | `POST` | `/v1/chat/completions` | OpenAI-compatible (+ `stream`). `model` selects the mode. |
+| `POST` | `/v1/messages` | **Anthropic-compatible** (+ stream) — drop-in for Claude Code. |
 | `GET` | `/v1/models` | `maestro-auto/fugu/ultra` + every registry model. |
 | `POST` | `/v1/route` | **Dry-run** the router: see the decision, no model call. |
 | `GET` | `/v1/traces/:id` | Inspect a past request's full trace. |
@@ -179,9 +205,13 @@ maestro registry check        # report registry staleness
 
 **Can I run it fully offline?** Yes — set `LOCAL_OPENAI_BASE_URL` to your Ollama/vLLM/llama.cpp server. Maestro never hosts a model itself.
 
+**Is it better than \<top single model\>?** Maestro isn't a model — it's the router. It *uses* the best models (including frontier ones) and reaches **frontier-level results at a fraction of the cost** by sending only the hard requests to the expensive models. The honest claim is "frontier-quality routing, open-source, far cheaper" — reproduce it yourself with `npm run eval` (offline) or `bash scripts/verify.sh` with your own keys.
+
 ## Acknowledgements
 
-Maestro is **not affiliated with Sakana AI.** It's inspired by the ideas in [Sakana's Fugu](https://sakana.ai/fugu-release/) (TRINITY + Conductor) and the community reverse-engineering in [OpenFugu](https://github.com/trotsky1997/OpenFugu); the cheap→escalate pattern descends from [FrugalGPT](https://arxiv.org/abs/2305.05176). See [`docs/`](docs) for the full design notes and analysis.
+Maestro is an **open-source implementation of the ideas in [Sakana's Fugu](https://sakana.ai/fugu-release/)**, described in two papers included in [`papers/`](papers): **TRINITY** ([arXiv 2512.04695](papers/TRINITY-fugu-2512.04695v3.pdf), the route→verify loop) and **Conductor** ([arXiv 2512.04388](papers/Conductor-fugu-ultra-2512.04388v5.pdf), multi-step decomposition). The cheap→escalate pattern descends from [FrugalGPT](https://arxiv.org/abs/2305.05176); community reverse-engineering: [OpenFugu](https://github.com/trotsky1997/OpenFugu). Full design notes + our analysis (with corrections against Sakana's official report) are in [`docs/`](docs).
+
+**Maestro is not affiliated with Sakana AI.** "Fugu" is Sakana AI's product/research; Maestro contains no Sakana code or weights — it's an independent open-source build from the public papers.
 
 ## License
 

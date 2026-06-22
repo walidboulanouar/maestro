@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAESTRO · VERIFY</title>
+<style>
+  :root{ --paper:#f5f2e8; --ink:#0a0a0a; --yellow:#ffe600; --pink:#ff3b3b; --green:#00cc44; --blue:#2b6fff; }
+  *{ box-sizing:border-box; border-radius:0 !important; }
+  body{ margin:0; background:var(--paper); color:var(--ink);
+        font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; line-height:1.45; }
+  .wrap{ max-width:1000px; margin:0 auto; padding:24px 16px 80px; }
+  h1{ font-size:44px; font-weight:900; letter-spacing:-1px; margin:0; text-transform:uppercase; }
+  .tag{ display:inline-block; background:var(--ink); color:var(--yellow); padding:4px 10px; font-weight:900;
+        text-transform:uppercase; transform:rotate(-1deg); margin:8px 0; }
+  .sub{ font-size:14px; max-width:680px; }
+  .box{ background:#fff; border:5px solid var(--ink); box-shadow:8px 8px 0 var(--ink); padding:16px; margin:18px 0; }
+  .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  label{ font-weight:900; text-transform:uppercase; font-size:12px; }
+  input,textarea{ font-family:inherit; font-size:15px; border:4px solid var(--ink); padding:10px; background:var(--paper); width:100%; }
+  textarea{ min-height:70px; resize:vertical; }
+  button{ font-family:inherit; font-weight:900; text-transform:uppercase; font-size:16px; cursor:pointer;
+          border:5px solid var(--ink); background:var(--yellow); color:var(--ink); padding:12px 22px;
+          box-shadow:6px 6px 0 var(--ink); transition:transform .05s, box-shadow .05s; }
+  button:active{ transform:translate(6px,6px); box-shadow:0 0 0 var(--ink); }
+  button.alt{ background:var(--blue); color:#fff; }
+  .summary{ font-size:24px; font-weight:900; text-transform:uppercase; }
+  .test{ border:4px solid var(--ink); margin:12px 0; background:#fff; }
+  .test > .head{ display:flex; justify-content:space-between; align-items:center; padding:10px 14px; cursor:pointer; }
+  .test .name{ font-weight:900; }
+  .badge{ font-weight:900; padding:4px 12px; border:3px solid var(--ink); text-transform:uppercase; font-size:13px; }
+  .PASS{ background:var(--green); color:#000; } .FAIL{ background:var(--pink); color:#fff; }
+  .RUN{ background:#ddd; color:#000; } .badge.assert{ background:#fff; font-weight:400; }
+  .detail{ border-top:3px dashed var(--ink); padding:12px 14px; display:none; }
+  .test.open .detail{ display:block; }
+  pre{ background:var(--ink); color:#e8e8e8; padding:12px; overflow:auto; font-size:12px; margin:8px 0 0; }
+  .down{ background:var(--pink); color:#fff; border:5px solid var(--ink); padding:14px; font-weight:900; display:none; }
+  .route-step{ border:3px solid var(--ink); padding:8px 10px; margin:6px 0; background:var(--paper); font-size:13px; }
+  .route-step b{ background:var(--yellow); padding:1px 5px; }
+  .v-ACCEPT{ color:var(--green); font-weight:900; } .v-REVISE{ color:var(--pink); font-weight:900; }
+  .stat{ display:inline-block; border:3px solid var(--ink); padding:6px 10px; margin:4px 6px 0 0; font-weight:900; background:var(--yellow); }
+  footer{ margin-top:30px; font-size:12px; border-top:4px solid var(--ink); padding-top:12px; }
+  a{ color:var(--blue); font-weight:900; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🐡 Maestro · Verify</h1>
+  <div class="tag">the open-source version of Sakana Fugu</div>
+  <p class="sub">An LLM <b>routing brain</b>: each request goes to the right model (cheap-first), gets verified, and escalates only if needed — with the full route + cost shown. This page runs live checks against your local server and lets you try it.</p>
+
+  <div class="box">
+    <div class="row">
+      <div style="flex:1; min-width:260px;">
+        <label>Server base URL</label>
+        <input id="base" value="http://localhost:8080" />
+      </div>
+      <button id="run">▶ Run all tests</button>
+    </div>
+    <div id="down" class="down">SERVER UNREACHABLE — run <code>npx maestro serve</code> (or <code>MAESTRO_FORCE_MOCK=true npx maestro serve</code> for a priced demo) first.</div>
+    <p class="summary" id="summary">— not run yet —</p>
+    <div id="tests"></div>
+  </div>
+
+  <div class="box">
+    <label>Try it — send a prompt through the router</label>
+    <textarea id="prompt">Design a production-grade multi-region rate limiter, analyzing trade-offs and failure modes.</textarea>
+    <div class="row" style="margin-top:10px;">
+      <button class="alt" id="send">Send →</button>
+    </div>
+    <div id="tryout"></div>
+  </div>
+
+  <footer>
+    Tests failing? Make sure the server is running. Zero-key demo: <code>MAESTRO_FORCE_MOCK=true npx maestro serve</code>.
+    More: <a href="README.md">README</a> · <a href="VERIFICATION.md">VERIFICATION</a> · <a href="papers/">papers</a>.
+  </footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const base = () => $("base").value.replace(/\/$/, "");
+$("base").value = localStorage.getItem("maestro_base") || "http://localhost:8080";
+$("base").addEventListener("change", () => localStorage.setItem("maestro_base", $("base").value));
+
+async function req(path, opts) {
+  const res = await fetch(base() + path, opts);
+  let body = null; const text = await res.text();
+  try { body = JSON.parse(text); } catch { body = text; }
+  return { status: res.status, body, text };
+}
+const post = (path, obj) => req(path, { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify(obj) });
+
+const TESTS = [
+  { name:"server reachable + healthy", assert:"GET /healthz → 200, status=ok", run: async () => {
+      const r = await req("/healthz"); return { ok: r.status===200 && r.body?.status==="ok", data:r.body }; } },
+  { name:"lists virtual models", assert:"GET /v1/models includes maestro-auto & maestro-fugu", run: async () => {
+      const r = await req("/v1/models"); const ids=(r.body?.data||[]).map(m=>m.id);
+      return { ok: ids.includes("maestro-auto") && ids.includes("maestro-fugu"), data: ids.slice(0,8) }; } },
+  { name:"easy task → cheap, low cost", assert:"translate → 200, has maestro block", run: async () => {
+      const r = await post("/v1/chat/completions",{model:"maestro-auto",messages:[{role:"user",content:"Translate good morning to Spanish"}]});
+      const m=r.body?.maestro; return { ok: r.status===200 && !!m && r.body.choices[0].message.content.length>0, data:m }; } },
+  { name:"hard task → escalates", assert:"final verdict ACCEPT, turns ≥ 1", run: async () => {
+      const r = await post("/v1/chat/completions",{model:"maestro-auto",messages:[{role:"user",content:"Design a production-grade multi-region rate limiter end-to-end, analyzing trade-offs and failure modes."}]});
+      const m=r.body?.maestro; const last=m?.route?.[m.route.length-1];
+      return { ok: !!m && m.turns>=1 && last?.verdict==="ACCEPT", data:m }; } },
+  { name:"route dry-run (no execution)", assert:"POST /v1/route → ladder ≥1, task=code", run: async () => {
+      const r = await post("/v1/route",{model:"maestro-auto",messages:[{role:"user",content:"write a regex for emails"}]});
+      return { ok: (r.body?.ladder?.length>=1) && r.body?.classify?.task==="code", data:r.body }; } },
+  { name:"Anthropic API (Claude Code)", assert:"POST /v1/messages → type=message", run: async () => {
+      const r = await post("/v1/messages",{model:"claude-opus-4.8",max_tokens:128,messages:[{role:"user",content:"hi"}]});
+      return { ok: r.status===200 && r.body?.type==="message" && r.body?.content?.[0]?.text?.length>0, data:r.body }; } },
+  { name:"streaming (SSE)", assert:"stream=true → contains data: and [DONE]", run: async () => {
+      const r = await post("/v1/chat/completions",{model:"maestro-auto",stream:true,messages:[{role:"user",content:"hi"}]});
+      return { ok: r.text.includes("data:") && r.text.includes("[DONE]"), data: r.text.slice(0,300)+"…" }; } },
+  { name:"rejects malformed (400)", assert:"missing model → HTTP 400", run: async () => {
+      const r = await post("/v1/chat/completions",{messages:[]}); return { ok: r.status===400, data:{status:r.status} }; } },
+  { name:"cost transparency present", assert:"cost_usd & savings_pct are numbers", run: async () => {
+      const r = await post("/v1/chat/completions",{model:"maestro-auto",messages:[{role:"user",content:"hello"}]});
+      const m=r.body?.maestro; return { ok: typeof m?.cost_usd==="number" && typeof m?.savings_pct==="number", data:m }; } },
+];
+
+function renderRoute(m){
+  if(!m) return "";
+  const steps = (m.route||[]).map(t=>`<div class="route-step">turn ${t.turn}: <b>${t.model}</b> ${t.effort?("@"+t.effort):""} → <span class="v-${t.verdict||''}">${t.verdict||"(no verify)"}</span>${t.verify_reason?(" — "+t.verify_reason):""}</div>`).join("");
+  const c=m.classify||{};
+  return `<div>${steps}</div>
+    <div style="margin-top:8px;">
+      <span class="stat">task: ${c.task}</span><span class="stat">difficulty: ${c.difficulty}</span>
+      <span class="stat">turns: ${m.turns}</span><span class="stat">cost: $${m.cost_usd}</span>
+      <span class="stat">frontier-only: $${m.cost_vs_frontier_only_usd}</span><span class="stat">savings: ${m.savings_pct}%</span>
+    </div>`;
+}
+
+async function runAll(){
+  $("down").style.display="none";
+  try { const h = await req("/healthz"); if(h.status!==200) throw 0; } catch { $("down").style.display="block"; $("summary").textContent="server unreachable"; return; }
+  const root=$("tests"); root.innerHTML=""; let pass=0;
+  for(const t of TESTS){
+    const el=document.createElement("div"); el.className="test open";
+    el.innerHTML=`<div class="head"><span class="name">${t.name}</span><span class="badge RUN">RUN…</span></div>
+      <div class="detail"><span class="badge assert">${t.assert}</span><pre>running…</pre></div>`;
+    root.appendChild(el);
+    const badge=el.querySelector(".badge"); const pre=el.querySelector("pre");
+    el.querySelector(".head").onclick=()=>el.classList.toggle("open");
+    try{ const r=await t.run(); badge.className="badge "+(r.ok?"PASS":"FAIL"); badge.textContent=r.ok?"PASS":"FAIL"; if(r.ok)pass++; pre.textContent=JSON.stringify(r.data,null,2); }
+    catch(e){ badge.className="badge FAIL"; badge.textContent="FAIL"; pre.textContent=String(e); }
+    if(badge.textContent==="PASS") el.classList.remove("open");
+  }
+  $("summary").textContent = `${pass} / ${TESTS.length} passed`;
+  $("summary").style.color = pass===TESTS.length ? "var(--green)" : "var(--pink)";
+}
+
+async function tryIt(){
+  const out=$("tryout"); out.innerHTML=`<pre>routing…</pre>`;
+  try{
+    const r=await post("/v1/chat/completions",{model:"maestro-auto",messages:[{role:"user",content:$("prompt").value}]});
+    const m=r.body?.maestro;
+    out.innerHTML = `<div class="box" style="box-shadow:none;margin:12px 0 0;"><b>ANSWER</b><pre>${(r.body?.choices?.[0]?.message?.content||r.text).replace(/</g,"&lt;")}</pre>
+      <b>HOW MAESTRO ROUTED IT</b>${renderRoute(m)}</div>`;
+  }catch(e){ out.innerHTML=`<pre>error: ${e}\n(is the server running?)</pre>`; }
+}
+
+$("run").onclick=runAll;
+$("send").onclick=tryIt;
+</script>
+</body>
+</html>

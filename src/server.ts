@@ -10,6 +10,13 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import type { MaestroConfig } from "./config.js";
+import {
+  anthropicMessageDelta,
+  anthropicStreamStart,
+  anthropicToChat,
+  toAnthropicResponse,
+  type AnthropicRequest,
+} from "./api/anthropic.js";
 import { maestroBlock, maestroHeaders, toOpenAIResponse } from "./api/shape.js";
 import { classify } from "./core/classify.js";
 import { orchestrate, resolveMode, type OrchestratorDeps } from "./core/orchestrator.js";
@@ -30,7 +37,7 @@ export function createApp(deps: AppDeps): Hono {
     c.json({
       name: "maestro",
       description: "Open-source LLM orchestration brain. OpenAI-compatible.",
-      endpoints: ["/v1/chat/completions", "/v1/models", "/v1/route", "/v1/traces/:id", "/healthz"],
+      endpoints: ["/v1/chat/completions", "/v1/messages", "/v1/models", "/v1/route", "/v1/traces/:id", "/healthz"],
       modes: ["maestro-auto", "maestro-fugu", "maestro-ultra", "<model-id> (passthrough)"],
     }),
   );
@@ -97,6 +104,45 @@ export function createApp(deps: AppDeps): Hono {
     const t = trace.get(c.req.param("id"));
     if (!t) return c.json({ error: { message: "trace not found", type: "not_found" } }, 404);
     return c.json({ ...t, maestro: maestroBlock(t) });
+  });
+
+  // Anthropic Messages API — lets Claude Code use Maestro (ANTHROPIC_BASE_URL).
+  app.post("/v1/messages", async (c) => {
+    const raw = (await c.req.json().catch(() => ({}))) as AnthropicRequest;
+    if (!Array.isArray(raw.messages) || raw.messages.length === 0) {
+      return c.json({ type: "error", error: { type: "invalid_request_error", message: "messages required" } }, 400);
+    }
+    const echoModel = typeof raw.model === "string" ? raw.model : "maestro-auto";
+    let result;
+    try {
+      result = await orchestrate(anthropicToChat(raw), { config, registry, providers });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return c.json({ type: "error", error: { type: "api_error", message } }, 502);
+    }
+    trace.record(result);
+
+    if (!raw.stream) {
+      for (const [k, v] of Object.entries(maestroHeaders(result))) c.header(k, v);
+      return c.json(toAnthropicResponse(result, echoModel));
+    }
+
+    return streamSSE(c, async (stream) => {
+      await stream.writeSSE({ event: "message_start", data: JSON.stringify(anthropicStreamStart(result, echoModel)) });
+      await stream.writeSSE({
+        event: "content_block_start",
+        data: JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } }),
+      });
+      for (const piece of chunkText(result.answer)) {
+        await stream.writeSSE({
+          event: "content_block_delta",
+          data: JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text: piece } }),
+        });
+      }
+      await stream.writeSSE({ event: "content_block_stop", data: JSON.stringify({ type: "content_block_stop", index: 0 }) });
+      await stream.writeSSE({ event: "message_delta", data: JSON.stringify(anthropicMessageDelta(result)) });
+      await stream.writeSSE({ event: "message_stop", data: JSON.stringify({ type: "message_stop" }) });
+    });
   });
 
   app.post("/v1/chat/completions", async (c) => {
