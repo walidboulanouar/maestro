@@ -4,8 +4,7 @@ These are **optional** role/persona prompts. They are **not** auto-injected — 
 
 | File | What it is |
 |---|---|
-| [`maestro-system-prompt.md`](maestro-system-prompt.md) | A long, full-featured assistant persona for "Maestro" — defines tone, refusal/safety flow, tool etiquette, formatting, etc. Adapted (rebranded) from a publicly-circulated frontier-assistant system prompt; every brand mention was replaced with "Maestro". Use it to give Maestro a strong default role. |
-| [`claude-fable-5.reference.md`](claude-fable-5.reference.md) | The original reference it was adapted from, kept verbatim for comparison/inspiration. |
+| [`maestro-system-prompt.md`](maestro-system-prompt.md) | A long, full-featured assistant persona for "Maestro": defines tone, refusal/safety flow, tool etiquette, formatting, etc. Adapted and rebranded from a publicly-circulated frontier-assistant system prompt; every brand mention was replaced with "Maestro". Use it to give Maestro a strong default role. |
 
 ## How to use
 
@@ -28,5 +27,5 @@ https://raw.githubusercontent.com/walidboulanouar/maestro/main/prompts/maestro-s
 ## Notes / honesty
 
 - **Opt-in only.** Maestro's value is routing + transparency, not a forced persona. Injecting a system prompt by default would break drop-in OpenAI/agent compatibility, so we don't.
-- **Provenance.** `claude-fable-5.reference.md` is a publicly-leaked third-party assistant prompt included here for reference; the Maestro version is a rebrand/adaptation for inspiration. Review and adjust it for your own product before shipping it to users — don't treat it as legally vetted boilerplate.
-- It's long (~3.8k lines). That's intentional — it's a complete persona. Trim it to taste.
+- **Provenance.** This persona was adapted/rebranded from a publicly-circulated third-party assistant prompt. Review and adjust it for your own product before shipping it to users; do not treat it as legally vetted boilerplate.
+- It's long (~3.8k lines). That's intentional: it's a complete persona. Trim it to taste.
