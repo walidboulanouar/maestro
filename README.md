@@ -13,7 +13,7 @@ Cheap-first, verify, escalate. Full cost and route transparency. Self-hostable. 
 
 > **The one thing no other open-source project does:** Maestro is the only open-source LLM router you can self-host with **zero setup and no GPU** (bring one API key) that is **both OpenAI- and Anthropic-compatible** (works in Claude Code and opencode) with **per-request cost transparency** and a **reproducible benchmark**. OpenFugu needs a GPU; LoRA-Harness needs a GPU. See [COMPARISON.md](COMPARISON.md).
 
-> ⚠️ **Status: early. This is an honest ~5-hour build (v0.1).** The core works and is tested live on real models (routing, verify/escalate, tool/agent loops, OpenAI + Anthropic APIs, streaming, transparency). It is NOT production-hardened yet, and the learned router is not built. Treat it as a strong, runnable foundation, not a finished product. See the [Roadmap](#roadmap) for what is next and [VERIFICATION.md](VERIFICATION.md) for exactly what is proven vs assumed.
+> ⚠️ **Status: early. This is an honest ~5-hour build (v0.1).** The core works and is tested live on real models (routing, verify/escalate, tool/agent loops, OpenAI + Anthropic APIs, streaming, transparency). It is NOT production-hardened yet. Treat it as a strong, runnable foundation, not a finished product. See the [Roadmap](#roadmap) for what is next and [VERIFICATION.md](VERIFICATION.md) for exactly what is proven vs assumed.
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A520-3c873a.svg)](package.json)
@@ -219,14 +219,15 @@ This is v0.1, a ~5-hour build. It works and is tested, but there is a lot of hea
 - [ ] Orchestration **profiles** (cheap / balanced / quality) + per-task best-model presets across ~40 models
 - [ ] Large, long-running, tool-calling agent eval (success = task completion, not text match)
 
-**Research (v2-v3)**
-- [ ] Learned **TRINITY-style router** (frozen Qwen3-0.6B + tiny head, CPU-only, trained offline) as a drop-in for the heuristic classifier
+**Later**
 - [ ] `maestro-ultra`: multi-step decomposition (Conductor-style) behind a quality gate
 - [ ] Custom direct providers (Groq/Together/Fireworks/...) beyond the OpenRouter-first default
 
+> A learned (GPU-trained) router is intentionally out of scope. Maestro stays a no-GPU routing layer: better heuristics + the verify/escalate loop, raised against the eval.
+
 ## FAQ
 
-**Isn't this just a wrapper?** The wrapper part (gateways, OpenAI serving) is *deliberately* not reinvented; that is solved. The value is the **routing policy + verify/escalate loop + transparency + a reproducible eval**. The roadmap's learned router is where it stops being "just a wrapper".
+**Isn't this just a wrapper?** The wrapper part (gateways, OpenAI serving) is *deliberately* not reinvented; that is solved. The value is the **routing policy + verify/escalate loop + `maestro-ultra` decomposition + transparency + a reproducible eval**. That is what a plain gateway wrapper does not give you.
 
 **Does it really save money?** On the bundled realistic-mix eval: ~97% cheaper than always-frontier (~26x better cost-per-success), and it beats random routing on both quality and cost. Your mileage depends on your traffic mix and registry, which is why the eval is in the repo and the cost is on every response.
 

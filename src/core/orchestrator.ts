@@ -26,8 +26,7 @@ import { classify } from "./classify.js";
 import { costOf } from "./cost.js";
 import { route, type RouteContext } from "./route.js";
 import { orchestrateUltra } from "./ultra.js";
-import { contentToText, toRawTranscript, totalChars } from "./transcript.js";
-import { learnedRoute } from "./learned-router.js";
+import { contentToText, totalChars } from "./transcript.js";
 import { chooseVerifier, verify } from "./verify.js";
 
 export interface OrchestratorDeps {
@@ -143,13 +142,6 @@ export async function orchestrate(
       estOutputTokens: NOMINAL_OUTPUT_TOKENS,
     };
     ladder = route(pool.length ? pool : registry.all(), signature, ctx).ladder;
-    // Optional learned-router (v2): a sidecar suggests the start model; safe no-op
-    // when unconfigured or unreachable.
-    if (config.routerUrl) {
-      const suggested = await learnedRoute(toRawTranscript(req.messages), config.routerUrl);
-      const m = suggested ? (pool.length ? pool : registry.all()).find((x) => x.id === suggested || x.slot === suggested) : undefined;
-      if (m) ladder = [{ model: m, effort: "medium" }, ...ladder.filter((r) => r.model.id !== m.id)];
-    }
   }
 
   const verifierModel = chooseVerifier(

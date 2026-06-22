@@ -5,7 +5,7 @@ The plan for turning Maestro from a runnable v0.1 into the default open-source L
 > Status today: **v0.1 (early, ~5-hour build).** The core works and is tested live on real models. Not production-hardened. Everything below is what gets it there.
 
 > ### Shipped on the `roadmap` branch (built + tested)
-> Retries + transient fallback, per-request timeouts, **auth + rate-limit + budget**, trace redaction, latency skip-verify, **multi-provider** (Groq/Together/Fireworks/DeepInfra/OpenAI/custom), **orchestration profiles** (cheap/balanced/quality), **dedupe cache**, **trace-viewer UI** (`/ui`), `maestro init`, **prompt/version registry**, **`maestro-ultra`** decomposition, **executable code verifier**, **full Anthropic `tool_use` mapping**, **learned-router seam + training recipe** (sidecar), **`npm run eval --report`** + rule-only baseline, and the **npm/ghcr release workflow**. 75 tests. Still needing a GPU / paid run / 2FA: real learned-router weights, the long-running agentic eval, true incremental streaming tool deltas, and the npm publish.
+> Retries + transient fallback, per-request timeouts, **auth + rate-limit + budget**, trace redaction, latency skip-verify, **multi-provider** (Groq/Together/Fireworks/DeepInfra/OpenAI/custom), **orchestration profiles** (cheap/balanced/quality), **dedupe cache**, **trace-viewer UI** (`/ui`), `maestro init`, **prompt/version registry**, **`maestro-ultra`** decomposition, **executable code verifier**, **full Anthropic `tool_use` mapping**, **`npm run eval --report`** + rule-only baseline, and the **npm/ghcr release workflow**. Still needing a paid run / 2FA: the long-running agentic eval, true incremental streaming tool deltas, and the npm publish.
 
 ## North star
 
@@ -82,16 +82,7 @@ Goal: routing that is measurably better than naive baselines on real, hard work.
 
 Done when: on a public agentic benchmark, Maestro matches best-single quality within a confidence interval at materially lower cost and bounded p95 latency, reproducible by one command.
 
-## v2.0 - Learned router (research)
-
-Goal: the actual Fugu mechanism, open and CPU-runnable.
-
-- [ ] **Data collection:** turn traces into labeled (request -> best model) training data (opt-in, redacted)
-- [ ] **TRINITY-style head:** frozen Qwen3-0.6B + a tiny linear head reading the penultimate-token hidden state, trained offline (isotropic ES; raw transcript, not chat template)
-- [ ] **Drop-in swap:** the learned router replaces the heuristic classifier behind the same interface, gated by eval
-- [ ] **Ship trained weights** + a reproducible training recipe
-
-Done when: the learned router beats the heuristic on oracle-route regret on a held-out set, runs on CPU, and is a config flag away.
+> Note: a learned (TRINITY-style, GPU-trained) router is intentionally **out of scope**. Maestro stays a no-GPU routing layer; the heuristic classifier plus the verify/escalate loop is the routing brain. The bar for "smarter routing" is raised with better heuristics and the eval, not a trained model.
 
 ## v3.0 - Ultra (multi-step)
 

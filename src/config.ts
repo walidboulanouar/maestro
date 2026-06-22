@@ -39,8 +39,6 @@ export interface MaestroConfig {
   /** Retries on 429/5xx/timeout per upstream call. */
   maxRetries: number;
   verifierModel: string;
-  /** Optional learned-router sidecar URL (v2). When set, it suggests the start model. */
-  routerUrl?: string;
   /** Path to a JSON prompt registry { "<name>": "<system prompt>" } (opt-in). */
   promptsFile?: string;
   /** Any OpenAI-compatible provider, keyed by name. */
@@ -154,7 +152,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MaestroConfig 
     requestTimeoutMs: num(env.MAESTRO_REQUEST_TIMEOUT_MS, 120_000),
     maxRetries: num(env.MAESTRO_MAX_RETRIES, 2),
     verifierModel: env.MAESTRO_VERIFIER_MODEL ?? "auto",
-    routerUrl: env.MAESTRO_ROUTER_URL,
     promptsFile: env.MAESTRO_PROMPTS,
     providers: buildProviders(env),
     traceFile: env.MAESTRO_TRACE_FILE,
