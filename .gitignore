@@ -53,3 +53,7 @@ coverage/
 # Our own code-traced analysis under archive/docs/ IS committed.
 archive/OpenFugu/
 archive/Mixture-of-LoRA-Harness/
+
+# Agent/reviewer feedback docs — local scratch, not tracked (typo'd folder name kept as-is).
+docs/feedbadks/
+docs/feedbacks/

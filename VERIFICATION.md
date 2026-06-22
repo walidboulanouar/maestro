@@ -10,7 +10,7 @@
 | It's tested | `npm test` | **30 tests pass** |
 | It runs with zero keys | `npx openmaestro serve` then `curl localhost:8080/healthz` | `{"status":"ok",...}` on the mock provider |
 | It routes & escalates | `bash scripts/verify.sh` | all endpoint checks ✅ |
-| It saves money (routing) | `npm run eval` | maestro ≈ 94% pass at ~91% lower cost than best-single |
+| It saves money (routing) | `npm run eval` | maestro ≈ 92% pass at ~97% lower cost than best-single (and beats random) |
 | It works in Claude Code | `ANTHROPIC_BASE_URL=http://localhost:8080 ANTHROPIC_API_KEY=unused claude` | Claude Code talks to Maestro |
 | It routes REAL models | put a key in `.env`, `bash scripts/verify.sh` | "real routing works" + real cost shown |
 
@@ -49,18 +49,18 @@ papers/                 the two source papers (TRINITY 2512.04695, Conductor 251
 - **Baselines:** best-single (always strongest), cheapest-single, random-route (deterministic), plus an **oracle** (cheapest model that would pass) for regret.
 - **Metrics:** pass rate, mean cost, passes-per-dollar, oracle-route **regret**, and **calibration** (Brier + ECE) of the classifier's confidence.
 
-Current result (16 fixtures, 7 priced models):
+Current result (25 fixtures ≈ realistic traffic mix, 7 priced models, real OpenRouter ids/prices):
 
 ```
 strategy             pass%      mean $      pass/$    regret $   fails
-maestro                94%     0.00128       731.0     0.00046       1
-best-single           100%     0.01509        66.3     0.01317       0
-cheapest-single        38%     0.00030      1239.1     0.00000      10
-random-route           88%     0.00133       658.5     0.00044       2
-Brier = 0.181   ECE = 0.116
+maestro                92%     0.00053      1747.9     0.00035       2
+best-single           100%     0.01507        66.3     0.01421       0
+cheapest-single        56%     0.00016      3566.0     0.00000      11
+random-route           88%     0.00689        127.7     0.00705       3
+Brier = 0.181   ECE = 0.110
 ```
 
-**Honest reading:** Maestro hits 94% of best-single quality at ~1/11th the cost (~11× more answers per dollar). It is **not** 100% — the heuristic classifier mis-estimates one fixture, and full escalation can occasionally cost ~the same as going straight to frontier. These are real and shown on purpose. This is a *routing* benchmark on a small fixture set, **not** a model-quality leaderboard.
+**Honest reading:** Maestro hits 92% of best-single quality at ~1/28th the cost (~26× more answers per dollar), and beats a **random** router on both quality (+4 pts) and cost (13× cheaper). `cheapest-single` is cheaper per call but fails 44% of tasks — Maestro is the best *balance*. It is **not** 100% — the heuristic classifier mis-estimates two fixtures, and full escalation can occasionally cost ~the same as going straight to frontier. These are real and shown on purpose. This is a *routing* benchmark on a realistic-mix fixture set, **not** a model-quality leaderboard. (Note: an earlier version of this harness had a constant "random" baseline — a bug we found and fixed; see the eval source.)
 
 ## Assumptions made (so you can attack them)
 
@@ -78,10 +78,11 @@ Brier = 0.181   ECE = 0.116
 
 ## Learnings / analysis (the non-obvious stuff)
 
-- **The verifier MUST be independent of the router**, or the escalation loop is inert (it only ever confirms its own start-tier choice). First implementation shared the difficulty signal → maestro scored **63% (below random's 88%)**. Splitting router (`classify`) from judge (`judgeDifficulty`) took it to **94%**. This mirrors the papers: the Verifier is a distinct role, and in production it's a strong model inspecting the *answer*, not the router's guess.
+- **The verifier MUST be independent of the router**, or the escalation loop is inert (it only ever confirms its own start-tier choice). First implementation shared the difficulty signal → maestro scored **63% (below random's 88%)**. Splitting router (`classify`) from judge (`judgeDifficulty`) took it to **92%**. This mirrors the papers: the Verifier is a distinct role, and in production it's a strong model inspecting the *answer*, not the router's guess.
 - **Slot labels are remappable metadata** (from the Fugu reverse-engineering): decoupling the routing policy from concrete model ids means you swap providers/models with zero retraining. Validated by the registry design.
 - **Tier thresholds (0.33/0.7) ≠ pass bands** — a calibration gap is unavoidable with a cheap classifier; the verify/escalate loop exists precisely to absorb it. That's the whole point of cheap-first-then-escalate.
-- **Honesty is the moat.** A suspicious 100% would be less credible than a reproducible 94% with the failure shown.
+- **Honesty is the moat.** A suspicious 100% would be less credible than a reproducible 92% with the failures shown. (We even document a bug we found in our own random baseline.)
+- **A cost optimizer must price-rank.** The router ignored price at first, so it tied a (buggy-but-cheap) baseline. Adding a price term to the guardrail score (`src/core/route.ts`) made it genuinely cost-optimal.
 
 ## Verification checklist for another agent
 
