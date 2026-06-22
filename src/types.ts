@@ -45,6 +45,8 @@ export const MaestroHintSchema = z
     verify: z.boolean().optional(),
     /** Pin to a specific registry model id or slot (bypasses routing). */
     pin: z.string().optional(),
+    /** Prepend a named system prompt from the prompt registry (MAESTRO_PROMPTS). */
+    prompt: z.string().optional(),
   })
   .strict();
 export type MaestroHint = z.infer<typeof MaestroHintSchema>;

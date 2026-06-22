@@ -7,9 +7,11 @@
  *   GET  /v1/traces/:id         inspect a past request's full trace
  *   GET  /healthz               liveness + which providers are configured
  */
+import { readFileSync } from "node:fs";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import type { MaestroConfig } from "./config.js";
+import type { ChatCompletionRequest } from "./types.js";
 import {
   anthropicMessageDelta,
   anthropicStreamStart,
@@ -60,6 +62,21 @@ export function createApp(deps: AppDeps): Hono {
   const charge = (c: { get: (k: never) => unknown }, usd: number) => {
     const key = c.get("apiKey" as never) as string | undefined;
     if (key && auth.budgetUsd > 0) spend.set(key, (spend.get(key) ?? 0) + usd);
+  };
+
+  // --- prompt registry (opt-in): maestro.prompt prepends a named system prompt ---
+  let prompts: Record<string, string> = {};
+  if (config.promptsFile) {
+    try {
+      prompts = JSON.parse(readFileSync(config.promptsFile, "utf8")) as Record<string, string>;
+    } catch {
+      /* ignore missing/invalid prompts file */
+    }
+  }
+  const applyPrompt = (r: ChatCompletionRequest): ChatCompletionRequest => {
+    const name = r.maestro?.prompt;
+    if (name && prompts[name]) r.messages = [{ role: "system", content: prompts[name] }, ...r.messages];
+    return r;
   };
 
   // --- dedupe cache (opt-in): identical requests skip the model call ---
@@ -158,7 +175,7 @@ export function createApp(deps: AppDeps): Hono {
     const echoModel = typeof raw.model === "string" ? raw.model : "maestro-auto";
     let result;
     try {
-      result = await orchestrate(anthropicToChat(raw), { config, registry, providers });
+      result = await orchestrate(applyPrompt(anthropicToChat(raw)), { config, registry, providers });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return c.json({ type: "error", error: { type: "api_error", message } }, 502);
@@ -194,7 +211,7 @@ export function createApp(deps: AppDeps): Hono {
     if (!parsed.success) {
       return c.json({ error: { message: parsed.error.message, type: "invalid_request_error" } }, 400);
     }
-    const req = parsed.data;
+    const req = applyPrompt(parsed.data);
 
     const ckey = config.cacheEnabled && !req.stream ? cacheKey(req) : null;
     if (ckey) {

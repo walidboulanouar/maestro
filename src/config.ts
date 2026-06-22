@@ -41,6 +41,8 @@ export interface MaestroConfig {
   verifierModel: string;
   /** Optional learned-router sidecar URL (v2). When set, it suggests the start model. */
   routerUrl?: string;
+  /** Path to a JSON prompt registry { "<name>": "<system prompt>" } (opt-in). */
+  promptsFile?: string;
   /** Any OpenAI-compatible provider, keyed by name. */
   providers: Record<string, ProviderConfig>;
   traceFile?: string;
@@ -153,6 +155,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MaestroConfig 
     maxRetries: num(env.MAESTRO_MAX_RETRIES, 2),
     verifierModel: env.MAESTRO_VERIFIER_MODEL ?? "auto",
     routerUrl: env.MAESTRO_ROUTER_URL,
+    promptsFile: env.MAESTRO_PROMPTS,
     providers: buildProviders(env),
     traceFile: env.MAESTRO_TRACE_FILE,
     redactTraces: bool(env.MAESTRO_REDACT_TRACES, true),

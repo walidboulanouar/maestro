@@ -121,6 +121,18 @@ describe("dedupe cache + trace viewer", () => {
   });
 });
 
+describe("prompt registry hint", () => {
+  it("is a safe no-op when the named prompt is unknown", async () => {
+    const config = loadConfig({});
+    const a = createApp(buildDeps(config, ModelRegistry.default(), new ProviderSet(config)));
+    const res = await a.request(
+      "/v1/chat/completions",
+      json({ model: "maestro-auto", messages: [{ role: "user", content: "hi" }], maestro: { prompt: "nope" } }),
+    );
+    expect(res.status).toBe(200);
+  });
+});
+
 describe("auth + rate limit", () => {
   function app(env: Record<string, string>) {
     const config = loadConfig(env);
