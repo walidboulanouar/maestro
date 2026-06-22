@@ -25,6 +25,7 @@ import type {
 import { classify } from "./classify.js";
 import { costOf } from "./cost.js";
 import { route, type RouteContext } from "./route.js";
+import { orchestrateUltra } from "./ultra.js";
 import { contentToText, totalChars } from "./transcript.js";
 import { chooseVerifier, verify } from "./verify.js";
 
@@ -93,7 +94,12 @@ export async function orchestrate(
 ): Promise<OrchestrationResult> {
   const { config, registry, providers } = deps;
   const { mode: rawMode, pin: modelPin } = resolveMode(req.model, config.defaultMode);
-  const mode: Mode = rawMode === "ultra" ? "fugu" : rawMode; // ultra falls back to fugu in v0
+  const hint0 = req.maestro;
+  // maestro-ultra: multi-step decomposition (unless a concrete model was pinned).
+  if (rawMode === "ultra" && !hasToolsField(req) && !(hint0?.pin ?? modelPin)) {
+    return orchestrateUltra(req, deps);
+  }
+  const mode: Mode = rawMode === "ultra" ? "fugu" : rawMode;
   const hint = req.maestro;
   const pin = hint?.pin ?? modelPin;
   const maxTurns = hint?.maxTurns ?? config.maxTurns;
@@ -257,6 +263,10 @@ export async function orchestrate(
     finishReason,
     ...(upstreamRaw !== undefined ? { upstreamRaw } : {}),
   };
+}
+
+function hasToolsField(req: ChatCompletionRequest): boolean {
+  return Array.isArray(req.tools) && req.tools.length > 0;
 }
 
 function lastUserOf(messages: ChatMessage[]): string {
