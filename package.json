@@ -5,14 +5,19 @@
   "description": "Open-source Fugu — the open-source LLM orchestration brain (Sakana Fugu, open-sourced). Route any models (open + closed) behind one OpenAI- and Anthropic-compatible endpoint, cheap-first with a verify/escalate loop and full cost/route transparency. Self-hostable. MIT.",
   "license": "MIT",
   "homepage": "https://maestro.ayautomate.com",
-  "repository": { "type": "git", "url": "git+https://github.com/walidboulanouar/maestro.git" },
-  "bugs": { "url": "https://github.com/walidboulanouar/maestro/issues" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walidboulanouar/maestro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/walidboulanouar/maestro/issues"
+  },
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "bin": {
-    "maestro": "./dist/cli.js"
+    "maestro": "dist/cli.js"
   },
   "files": [
     "dist",
