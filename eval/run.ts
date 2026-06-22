@@ -109,7 +109,17 @@ async function main(): Promise<void> {
   const bestRecs: { pass: boolean; cost: number; oracleCost: number }[] = [];
   const cheapRecs: { pass: boolean; cost: number; oracleCost: number }[] = [];
   const randRecs: { pass: boolean; cost: number; oracleCost: number }[] = [];
+  const ruleRecs: { pass: boolean; cost: number; oracleCost: number }[] = [];
   const calib: { p: number; outcome: boolean }[] = [];
+
+  // rule-only baseline: pick a tier purely by keyword/task, no difficulty or escalation
+  const byTier = (tier: string) =>
+    pool.filter((m) => m.tier === tier).sort((a, b) => b.strength - a.strength)[0] ?? cheapest;
+  const ruleRoute = (prompt: string): ModelSpec => {
+    if (/\b(code|function|bug|regex|api|sql|typescript|python|design|architecture)\b/i.test(prompt)) return byTier("mid");
+    if (/\b(prove|integral|derivative|theorem|equation|analy[sz]e|reasoning)\b/i.test(prompt)) return byTier("mid");
+    return byTier("cheap");
+  };
   const perFixture: string[] = [];
 
   for (let i = 0; i < fixtures.length; i++) {
@@ -136,6 +146,8 @@ async function main(): Promise<void> {
     cheapRecs.push({ pass: passes(cheapest, fx.difficulty), cost: costOf(cheapest, usage), oracleCost });
     const rnd = pickDeterministic(pool, i);
     randRecs.push({ pass: passes(rnd, fx.difficulty), cost: costOf(rnd, usage), oracleCost });
+    const ruleM = ruleRoute(fx.prompt);
+    ruleRecs.push({ pass: passes(ruleM, fx.difficulty), cost: costOf(ruleM, usage), oracleCost });
 
     perFixture.push(
       `${pad(fx.id, 16)} d=${fx.difficulty.toFixed(2)} ` +
@@ -148,6 +160,7 @@ async function main(): Promise<void> {
     summarize("maestro", maestroRecs),
     summarize("best-single", bestRecs),
     summarize("cheapest-single", cheapRecs),
+    summarize("rule-only", ruleRecs),
     summarize("random-route", randRecs),
   ];
 
