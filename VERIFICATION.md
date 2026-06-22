@@ -7,7 +7,7 @@
 | Claim | Verify with | Expected |
 |---|---|---|
 | It builds & typechecks | `npm install && npm run typecheck && npm run build` | exit 0, `dist/cli.js` exists |
-| It's tested | `npm test` | **72 tests pass** |
+| It's tested | `npm test` | **65 tests pass** |
 | The server boots without a GPU | `npm run serve` then `curl localhost:8080/healthz` | `{"status":"ok",...}` (add a provider key to route to real models) |
 | It routes & escalates | `bash scripts/verify.sh` | all endpoint checks ✅ |
 | It saves money (routing) | `npm run eval` | maestro ≈ 92% pass at ~97% lower cost than best-single (and beats random) |
@@ -35,7 +35,7 @@ src/
   api/{shape,anthropic}.ts        OpenAI + Anthropic response shaping
   transparency/trace.ts  in-memory + JSONL trace store
 eval/{run,metrics}.ts + fixtures/tasks.jsonl   offline routing benchmark
-test/*.test.ts          72 vitest tests
+test/*.test.ts          65 vitest tests
 papers/                 the two source papers (TRINITY 2512.04695, Conductor 2512.04388)
 ```
 
@@ -87,7 +87,7 @@ Brier = 0.181   ECE = 0.110
 ## Verification checklist for another agent
 
 - [ ] `npm install && npm run typecheck` → exit 0
-- [ ] `npm test` → 72 passing
+- [ ] `npm test` → 65 passing
 - [ ] `npm run build` → `dist/cli.js` exists and `node dist/cli.js version` prints `0.1.0`
 - [ ] `npm run eval` → maestro pass% and savings match the README
 - [ ] `npm run eval -- --verbose` → inspect per-fixture routing decisions
