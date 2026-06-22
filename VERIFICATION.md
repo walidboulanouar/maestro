@@ -8,7 +8,7 @@
 |---|---|---|
 | It builds & typechecks | `npm install && npm run typecheck && npm run build` | exit 0, `dist/cli.js` exists |
 | It's tested | `npm test` | **30 tests pass** |
-| It runs with zero keys | `npx maestro serve` then `curl localhost:8080/healthz` | `{"status":"ok",...}` on the mock provider |
+| It runs with zero keys | `npx openmaestro serve` then `curl localhost:8080/healthz` | `{"status":"ok",...}` on the mock provider |
 | It routes & escalates | `bash scripts/verify.sh` | all endpoint checks ✅ |
 | It saves money (routing) | `npm run eval` | maestro ≈ 94% pass at ~91% lower cost than best-single |
 | It works in Claude Code | `ANTHROPIC_BASE_URL=http://localhost:8080 ANTHROPIC_API_KEY=unused claude` | Claude Code talks to Maestro |
@@ -91,7 +91,7 @@ Brier = 0.181   ECE = 0.116
 - [ ] `npm run eval` → maestro pass% and savings match the README
 - [ ] `npm run eval -- --verbose` → inspect per-fixture routing decisions
 - [ ] `bash scripts/verify.sh` → all endpoint smoke checks ✅
-- [ ] Open `test.html` in a browser while `npx maestro serve` runs → all cards PASS
+- [ ] Open `test.html` in a browser while `npx openmaestro serve` runs → all cards PASS
 - [ ] Put a real key in `.env`, re-run `scripts/verify.sh` → "real routing works" with real cost
 - [ ] Confirm `papers/` contains both source PDFs
 - [ ] Grep for overclaims: the repo should never assert "beats model X" without a reproducible number

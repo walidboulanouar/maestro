@@ -227,7 +227,7 @@ interface ProviderAdapter {
 
 ## 10. Config & self-host
 - Single Node process. `maestro.config.ts` (or JSON/env) for: registry, gateway keys, default mode, `maxTurns`, difficulty thresholds, budget caps, region policy, classifier mode.
-- Ship: `docker run -e OPENROUTER_API_KEY=... -p 8080:8080 maestro` and `npx maestro@<pinned> serve`.
+- Ship: `docker run -e OPENROUTER_API_KEY=... -p 8080:8080 maestro` and `npx openmaestro@<pinned> serve`.
 - Zero external infra for v0 (no Postgres/Redis/queue — a single self-hosted router doesn't need them; SQLite/JSONL is enough). Concurrency via Node async; add a queue only if someone needs batch.
 
 ---

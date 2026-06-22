@@ -11,12 +11,14 @@ Cheap-first, verify, escalate. Full cost & route transparency. Self-hostable. MI
 
 *Open-source Fugu: open, honest, EU-clean, runs anywhere, and not locked to three closed models.*
 
-> **The one thing no other open-source project does:** Maestro is the only open-source LLM router you can run with **zero setup — no GPU, no keys** (`npx maestro serve`) that is **both OpenAI- *and* Anthropic-compatible** (works in Claude Code *and* opencode) with **per-request cost transparency** and a **reproducible benchmark**. OpenFugu needs a GPU and ships a *mock* benchmark; LoRA-Harness ships none. See [COMPARISON.md](COMPARISON.md).
+> **The one thing no other open-source project does:** Maestro is the only open-source LLM router you can run with **zero setup — no GPU, no keys** (`npx openmaestro serve`) that is **both OpenAI- *and* Anthropic-compatible** (works in Claude Code *and* opencode) with **per-request cost transparency** and a **reproducible benchmark**. OpenFugu needs a GPU and ships a *mock* benchmark; LoRA-Harness ships none. See [COMPARISON.md](COMPARISON.md).
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A520-3c873a.svg)](package.json)
 [![tests](https://img.shields.io/badge/tests-28%20passing-brightgreen.svg)](test)
 [![status](https://img.shields.io/badge/status-v0.1%20(runnable)-orange.svg)](#roadmap)
+[![site](https://img.shields.io/badge/site-maestro.ayautomate.com-2b6fff.svg)](https://maestro.ayautomate.com)
+[![npm](https://img.shields.io/badge/npm-openmaestro-cb3837.svg)](https://www.npmjs.com/package/openmaestro)
 
 </div>
 
@@ -45,7 +47,7 @@ Modern LLM stacks have a problem: **the best model for a one-line translation is
 Maestro runs with **zero API keys** out of the box (built-in mock provider), so you can see it work instantly:
 
 ```bash
-npx maestro serve            # or: docker run -p 8080:8080 ghcr.io/youruser/maestro
+npx openmaestro serve            # or: docker run -p 8080:8080 ghcr.io/youruser/maestro
 ```
 
 ```bash
@@ -73,7 +75,7 @@ export OPENROUTER_API_KEY=sk-or-...     # open + closed models, BYOK
 # or LOCAL_OPENAI_BASE_URL=http://localhost:11434/v1   # Ollama / vLLM / llama.cpp — 100% offline
 ```
 
-Want the full demo with **real prices but no spend**? `MAESTRO_FORCE_MOCK=true npx maestro serve` routes over the priced registry and executes on the mock provider.
+Want the full demo with **real prices but no spend**? `MAESTRO_FORCE_MOCK=true npx openmaestro serve` routes over the priced registry and executes on the mock provider.
 
 ## Use it in your coding agent
 

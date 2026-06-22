@@ -11,7 +11,7 @@ An honest, verifiable head-to-head. We compare on the axes that matter for a **u
 
 | | **Maestro** | OpenFugu | Mixture-of-LoRA-Harness |
 |---|:--:|:--:|:--:|
-| Runs with **zero setup / no GPU** | ✅ `npx maestro serve` | ❌ needs Python + GPU + Qwen3-0.6B weights | ❌ needs GPU + SGLang + LoRA adapters |
+| Runs with **zero setup / no GPU** | ✅ `npx openmaestro serve` | ❌ needs Python + GPU + Qwen3-0.6B weights | ❌ needs GPU + SGLang + LoRA adapters |
 | **Routes across providers** (open + closed) | ✅ any, BYOK | ⚠️ litellm pool (research) | ❌ LoRA adapters on one base only |
 | **OpenAI-compatible** endpoint | ✅ | ✅ (last-message only) | ✅ |
 | **Anthropic / Claude Code** support | ✅ `/v1/messages` | ❌ | ❌ |
@@ -25,7 +25,7 @@ An honest, verifiable head-to-head. We compare on the axes that matter for a **u
 
 ## Where Maestro is honestly *better*
 
-1. **It actually runs, for anyone, right now** — no GPU, no weights, no Python. `npx maestro serve` + curl works in 30 seconds. OpenFugu and MoL both require a GPU box and model artifacts.
+1. **It actually runs, for anyone, right now** — no GPU, no weights, no Python. `npx openmaestro serve` + curl works in 30 seconds. OpenFugu and MoL both require a GPU box and model artifacts.
 2. **Honest, reproducible numbers.** OpenFugu's famous "+107% over best single" is, by its own code, a **mock per-question routing harness** — not production proof. MoL ships **no benchmarks at all**. Maestro's `npm run eval` is offline, deterministic, graded against ground truth with oracle-route regret and calibration — and it *shows its one failure*.
 3. **Real product surface.** OpenAI **and** Anthropic APIs (so Claude Code / opencode / Cursor work), request validation, streaming, per-request cost transparency, a dry-run `/v1/route`, trace inspection. The others are research scaffolds.
 4. **Provider-agnostic by design.** Maestro routes across *any* models (open + closed + local), swappable via a JSON registry with no retraining. MoL routes LoRA adapters on a single base; OpenFugu targets a research pool.

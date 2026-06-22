@@ -21,7 +21,7 @@ Copy-paste-ready posts + the honest framing. **Reproduce every number before you
 >
 > Maestro is *just the routing brain*. Point your OpenAI (or Anthropic) client at it; for every request it classifies the task, tries a cheap model first, **verifies** the answer, and **escalates** to a stronger model only when needed — then shows you the exact route, tokens and cost on the response.
 >
-> - Runs with **zero API keys** (built-in mock provider): `npx maestro serve`
+> - Runs with **zero API keys** (built-in mock provider): `npx openmaestro serve`
 > - Routes **any** models — open + closed via OpenRouter/Vercel, or your **local** Ollama/vLLM
 > - Works in **Claude Code** (`ANTHROPIC_BASE_URL`) and **opencode/Cursor** (OpenAI base URL)
 > - Honest, reproducible benchmark (`npm run eval`): **94% of best-single quality at 91% lower cost** — and it shows its one failure
@@ -42,7 +42,7 @@ Maestro = the open version. Built from the 2 papers. Runs anywhere. MIT. 🧵
 2/ It's *just the routing brain*. Point your OpenAI/Anthropic client at it →
 classify → try cheap model → **verify** → **escalate** only if needed → show the route + cost.
 
-`npx maestro serve` (works with ZERO api keys via a mock provider)
+`npx openmaestro serve` (works with ZERO api keys via a mock provider)
 
 3/ Honest numbers (reproduce with `npm run eval`, offline):
 • 94% of best-single quality
@@ -74,6 +74,6 @@ It even shows its 1 failure. No mock "+107%" like the other open Fugu.
 
 1. Put **one** key in `.env` (gitignored): `OPENROUTER_API_KEY=` (easiest — open + closed models, one key) — or `AI_GATEWAY_API_KEY`, or a local `LOCAL_OPENAI_BASE_URL`.
 2. Run `bash scripts/verify.sh` → it boots the server, smoke-tests every endpoint, and (with a key) sends one **real** request showing the real route + cost.
-3. Open `test.html` while `npx maestro serve` runs → click **Run all tests**.
+3. Open `test.html` while `npx openmaestro serve` runs → click **Run all tests**.
 
 To actually launch: publish to npm (`npm publish`), push a Docker image to ghcr, record a ~20s demo GIF (the `test.html` "Try it" panel + the route/cost is the money shot), then post the Show HN / thread above.

@@ -74,7 +74,7 @@
   <h2 id="start">Try it in 30 seconds</h2>
   <div class="box">
     <p>Runs with <b>zero API keys</b> (built-in mock provider):</p>
-    <pre>npx maestro serve
+    <pre>npx openmaestro serve
 curl -s localhost:8080/v1/chat/completions -H 'content-type: application/json' \
   -d '{"model":"maestro-auto","messages":[{"role":"user","content":"hello"}]}' | jq .maestro</pre>
     <p>Add a key for real models — your OpenAI code doesn't change, just the base URL:</p>
