@@ -1,0 +1,12 @@
+node_modules
+dist
+test
+eval
+docs
+archive
+.git
+.github
+*.log
+traces
+.env
+.env.*

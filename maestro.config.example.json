@@ -1,0 +1,52 @@
+{
+  "updated": "2026-06-22",
+  "models": [
+    {
+      "slot": "cheap-generalist",
+      "id": "z-ai/glm-5.2-air",
+      "provider": "openrouter",
+      "tier": "cheap",
+      "strength": 70,
+      "caps": ["code", "math", "reasoning", "translation", "factual", "long-context"],
+      "price": { "in": 0.2, "out": 0.6, "updated": "2026-06-22" },
+      "contextWindow": 1000000,
+      "tags": { "positive:general": 1, "positive:code": 1 }
+    },
+    {
+      "slot": "mid-reasoner",
+      "id": "deepseek/deepseek-v4",
+      "provider": "openrouter",
+      "tier": "mid",
+      "strength": 86,
+      "caps": ["code", "math", "reasoning", "long-context", "factual"],
+      "price": { "in": 0.5, "out": 2.2, "updated": "2026-06-22" },
+      "contextWindow": 256000,
+      "tags": { "strong:reasoning": 1, "strong:math": 1, "positive:code": 1 }
+    },
+    {
+      "slot": "frontier-coder",
+      "id": "anthropic/claude-opus-4.8",
+      "provider": "openrouter",
+      "tier": "frontier",
+      "strength": 97,
+      "caps": ["code", "math", "reasoning", "translation", "factual", "long-context", "vision"],
+      "efforts": ["low", "medium", "high"],
+      "price": { "in": 5, "out": 25, "updated": "2026-06-22" },
+      "contextWindow": 1000000,
+      "tags": { "strong:code": 1, "strong:reasoning": 1 }
+    },
+    {
+      "slot": "local-llama",
+      "id": "llama3.3",
+      "provider": "local-openai",
+      "tier": "mid",
+      "strength": 78,
+      "caps": ["code", "reasoning", "factual"],
+      "price": { "in": 0, "out": 0, "updated": "2026-06-22" },
+      "contextWindow": 128000,
+      "regions": ["eu", "us", "local"],
+      "privacyOk": true,
+      "tags": { "positive:general": 1 }
+    }
+  ]
+}

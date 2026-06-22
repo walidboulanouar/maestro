@@ -1,0 +1,18 @@
+archive/ — third-party reference implementations, vendored for study only.
+
+These are independent projects, included here unmodified (their .git removed) as
+read-only reference material while we design our own implementation. We claim no
+ownership and redistribute them only under their original licenses (see each
+project's LICENSE / NOTICE).
+
+- OpenFugu/                  — © its authors (trotsky1997). See OpenFugu/LICENSE, OpenFugu/NOTICE.
+                              https://github.com/trotsky1997/OpenFugu
+- Mixture-of-LoRA-Harness/   — © MindLab-Research. See Mixture-of-LoRA-Harness/LICENSE.
+                              https://github.com/MindLab-Research/Mixture-of-LoRA-Harness
+
+Neither is affiliated with Sakana AI. "Fugu" is Sakana AI's product/research
+(https://sakana.ai/fugu-release/). No Sakana weights or product code are included.
+
+Our own code and design notes live OUTSIDE archive/ (see ../README.md, ../docs/).
+If you don't want to vendor these copies, delete archive/ — the docs/ analysis
+stands on its own and links to the upstream repos.

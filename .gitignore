@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.pnp.cjs
+
+# Build output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Env & secrets — NEVER commit
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+.maestro/keys/
+
+# Runtime data / traces / local store
+*.sqlite
+*.sqlite-journal
+*.db
+traces/
+*.log
+logs/
+
+# Eval artifacts (regenerable)
+eval/results/
+eval/.cache/
+
+# Coverage & test
+coverage/
+.nyc_output/
+.vitest/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+
+# Caches
+.cache/
+.turbo/
+.npm/
+
+# Vendored third-party source — kept locally for study, NOT committed (see archive/NOTICE).
+# Our own code-traced analysis under archive/docs/ IS committed.
+archive/OpenFugu/
+archive/Mixture-of-LoRA-Harness/

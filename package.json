@@ -1,0 +1,57 @@
+{
+  "name": "maestro",
+  "version": "0.1.0",
+  "private": false,
+  "description": "The open-source orchestration brain for LLMs. Route any models (open + closed) behind one OpenAI-compatible endpoint, cheap-first with a verify/escalate loop, and full cost/route transparency. Self-hostable. MIT.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "maestro": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/cli.ts serve",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/cli.js serve",
+    "serve": "tsx src/cli.ts serve",
+    "route": "tsx src/cli.ts route",
+    "eval": "tsx eval/run.ts",
+    "registry:check": "tsx src/cli.ts registry check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.check.json"
+  },
+  "keywords": [
+    "llm",
+    "router",
+    "llm-router",
+    "orchestration",
+    "openai-compatible",
+    "model-routing",
+    "ai-gateway",
+    "openrouter",
+    "fugu",
+    "cascade",
+    "frugalgpt",
+    "ollama",
+    "self-hosted"
+  ],
+  "dependencies": {
+    "@hono/node-server": "2.0.4",
+    "hono": "4.12.25",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "26.0.0",
+    "tsx": "4.22.4",
+    "typescript": "5.9.3",
+    "vitest": "4.1.9"
+  }
+}
