@@ -13,6 +13,8 @@ permissions:
 jobs:
   npm:
     runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,7 +24,9 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm run typecheck && npm test && npm run build
-      - run: npm publish --access public
+      # only publish when an NPM token is configured (skips cleanly otherwise)
+      - if: ${{ env.NPM_TOKEN != '' }}
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
