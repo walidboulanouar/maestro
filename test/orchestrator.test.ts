@@ -69,6 +69,19 @@ describe("orchestrate (mock provider, offline)", () => {
     expect(result.costVsFrontierOnlyUsd).toBeGreaterThanOrEqual(result.costUsd);
   });
 
+  it("maestro-ultra runs the decomposition path and returns an answer", async () => {
+    const result = await orchestrate(
+      {
+        model: "maestro-ultra",
+        messages: [{ role: "user", content: "Design and implement a rate limiter, then write tests for it." }],
+      },
+      deps(),
+    );
+    expect(result.mode).toBe("ultra");
+    expect(result.answer.length).toBeGreaterThan(0);
+    expect(result.turns).toBeGreaterThanOrEqual(1);
+  });
+
   it("respects maestro.verify=false (single shot)", async () => {
     const result = await orchestrate(
       {

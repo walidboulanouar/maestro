@@ -45,6 +45,8 @@ export const MaestroHintSchema = z
     verify: z.boolean().optional(),
     /** Pin to a specific registry model id or slot (bypasses routing). */
     pin: z.string().optional(),
+    /** Prepend a named system prompt from the prompt registry (MAESTRO_PROMPTS). */
+    prompt: z.string().optional(),
   })
   .strict();
 export type MaestroHint = z.infer<typeof MaestroHintSchema>;
@@ -205,6 +207,8 @@ export interface OrchestrationResult {
    * (native_finish_reason, usage.cost, system_fingerprint, openrouter_metadata,
    * per-choice errors, …) aren't erased. Undefined for the mock provider. */
   upstreamRaw?: unknown;
+  /** True when this result was served from the dedupe cache (no model call). */
+  cached?: boolean;
 }
 
 export type Mode = "auto" | "fugu" | "ultra" | "passthrough";

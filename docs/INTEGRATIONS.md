@@ -6,7 +6,7 @@ Maestro is a **transparent OpenAI-compatible proxy** — exactly like pointing a
 
 ```bash
 # one OpenRouter key unlocks the whole catalog, routed automatically:
-OPENROUTER_API_KEY=sk-or-... npx openmaestro serve
+OPENROUTER_API_KEY=sk-or-... npm run serve
 ```
 
 It listens on `http://localhost:8080`. Use model id **`maestro-auto`** (routed) or any real model id (pass-through).

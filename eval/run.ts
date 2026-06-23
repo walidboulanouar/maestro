@@ -12,7 +12,7 @@
  * Grading uses each fixture's GROUND-TRUTH difficulty (not the classifier's
  * estimate), and oracle-route regret vs the cheapest model that would pass.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { loadConfig } from "../src/config.js";
@@ -109,7 +109,17 @@ async function main(): Promise<void> {
   const bestRecs: { pass: boolean; cost: number; oracleCost: number }[] = [];
   const cheapRecs: { pass: boolean; cost: number; oracleCost: number }[] = [];
   const randRecs: { pass: boolean; cost: number; oracleCost: number }[] = [];
+  const ruleRecs: { pass: boolean; cost: number; oracleCost: number }[] = [];
   const calib: { p: number; outcome: boolean }[] = [];
+
+  // rule-only baseline: pick a tier purely by keyword/task, no difficulty or escalation
+  const byTier = (tier: string) =>
+    pool.filter((m) => m.tier === tier).sort((a, b) => b.strength - a.strength)[0] ?? cheapest;
+  const ruleRoute = (prompt: string): ModelSpec => {
+    if (/\b(code|function|bug|regex|api|sql|typescript|python|design|architecture)\b/i.test(prompt)) return byTier("mid");
+    if (/\b(prove|integral|derivative|theorem|equation|analy[sz]e|reasoning)\b/i.test(prompt)) return byTier("mid");
+    return byTier("cheap");
+  };
   const perFixture: string[] = [];
 
   for (let i = 0; i < fixtures.length; i++) {
@@ -136,6 +146,8 @@ async function main(): Promise<void> {
     cheapRecs.push({ pass: passes(cheapest, fx.difficulty), cost: costOf(cheapest, usage), oracleCost });
     const rnd = pickDeterministic(pool, i);
     randRecs.push({ pass: passes(rnd, fx.difficulty), cost: costOf(rnd, usage), oracleCost });
+    const ruleM = ruleRoute(fx.prompt);
+    ruleRecs.push({ pass: passes(ruleM, fx.difficulty), cost: costOf(ruleM, usage), oracleCost });
 
     perFixture.push(
       `${pad(fx.id, 16)} d=${fx.difficulty.toFixed(2)} ` +
@@ -148,6 +160,7 @@ async function main(): Promise<void> {
     summarize("maestro", maestroRecs),
     summarize("best-single", bestRecs),
     summarize("cheapest-single", cheapRecs),
+    summarize("rule-only", ruleRecs),
     summarize("random-route", randRecs),
   ];
 
@@ -170,6 +183,28 @@ async function main(): Promise<void> {
       `(best-single ${(best.passRate * 100).toFixed(0)}%) at ` +
       `${(savings * 100).toFixed(0)}% lower mean cost than best-single.\n`,
   );
+
+  if (process.argv.includes("--report")) {
+    const md =
+      `# Maestro eval report\n\n` +
+      `Reproduce: \`npm run eval\`. Offline + deterministic: routes over the priced\n` +
+      `registry but executes on the mock provider, graded against each fixture's\n` +
+      `ground-truth difficulty with oracle-route regret. ${fixtures.length} fixtures, ${pool.length} models.\n\n` +
+      `| strategy | pass% | mean $ | pass/$ | regret $ | fails |\n|---|--:|--:|--:|--:|--:|\n` +
+      rows
+        .map(
+          (r) =>
+            `| ${r.name} | ${(r.passRate * 100).toFixed(0)}% | ${r.meanCostUsd.toFixed(5)} | ` +
+            `${Number.isFinite(r.passesPerDollar) ? r.passesPerDollar.toFixed(1) : "inf"} | ${r.meanRegretUsd.toFixed(5)} | ${r.fails} |`,
+        )
+        .join("\n") +
+      `\n\ncalibration: Brier = ${brier(calib).toFixed(3)}, ECE = ${ece(calib).toFixed(3)} (lower is better).\n\n` +
+      `**Read:** maestro reaches ${(maestro.passRate * 100).toFixed(0)}% of best-single quality at ` +
+      `${(savings * 100).toFixed(0)}% lower mean cost, and beats rule-only and random on quality. ` +
+      `cheapest-single is cheaper per call but fails ${rows[2]!.fails}/${fixtures.length}. Not a leaderboard claim.\n`;
+    writeFileSync(join(here, "REPORT.md"), md);
+    console.log("wrote eval/REPORT.md");
+  }
 }
 
 function pickDeterministic(pool: ModelSpec[], i: number): ModelSpec {

@@ -7,8 +7,8 @@
 | Claim | Verify with | Expected |
 |---|---|---|
 | It builds & typechecks | `npm install && npm run typecheck && npm run build` | exit 0, `dist/cli.js` exists |
-| It's tested | `npm test` | **30 tests pass** |
-| The server boots without a GPU | `npx openmaestro serve` then `curl localhost:8080/healthz` | `{"status":"ok",...}` (add a provider key to route to real models) |
+| It's tested | `npm test` | **73 tests pass** |
+| The server boots without a GPU | `npm run serve` then `curl localhost:8080/healthz` | `{"status":"ok",...}` (add a provider key to route to real models) |
 | It routes & escalates | `bash scripts/verify.sh` | all endpoint checks ✅ |
 | It saves money (routing) | `npm run eval` | maestro ≈ 92% pass at ~97% lower cost than best-single (and beats random) |
 | It works in Claude Code | `ANTHROPIC_BASE_URL=http://localhost:8080 ANTHROPIC_API_KEY=unused claude` | Claude Code talks to Maestro |
@@ -35,7 +35,7 @@ src/
   api/{shape,anthropic}.ts        OpenAI + Anthropic response shaping
   transparency/trace.ts  in-memory + JSONL trace store
 eval/{run,metrics}.ts + fixtures/tasks.jsonl   offline routing benchmark
-test/*.test.ts          30 vitest tests
+test/*.test.ts          73 vitest tests
 papers/                 the two source papers (TRINITY 2512.04695, Conductor 2512.04388)
 ```
 
@@ -66,7 +66,7 @@ Brier = 0.181   ECE = 0.110
 
 1. **The default registry's model ids, prices, and strengths are indicative** and dated `2026-06-22`. They are not live-fetched. Swap in your own via `MAESTRO_REGISTRY`. (`maestro registry check` warns when stale.)
 2. **The mock provider models answer quality is simulated** from `strength` vs `judgeDifficulty`, not from real generations — that's what makes the eval free and deterministic. Real quality requires real keys (`scripts/verify.sh` does a real call if a key is set).
-3. **The heuristic classifier is v0.** It's regex/cue-based. The learned TRINITY-style router (the papers' actual mechanism) is roadmap v2; v0 deliberately ships without ML so it runs anywhere.
+3. **The heuristic classifier is v0.** It's regex/cue-based. A learned (GPU-trained) router is intentionally OUT OF SCOPE; Maestro stays no-GPU (heuristic classifier + verify/escalate).
 4. **`maestro-ultra` falls back to `fugu`** until the Conductor decomposition lands (v3).
 5. **Verifier false-accepts default to ACCEPT** on unparseable real-LLM output (to avoid runaway cost) — a conservative cost choice, noted in `verify.ts`.
 
@@ -74,7 +74,7 @@ Brier = 0.181   ECE = 0.110
 
 - No real executable code verifier yet (the verifier is an LLM rubric / mock heuristic) — roadmap v1.
 - Streaming for orchestrated modes streams the *final* answer after the loop completes (true token-streaming only in passthrough). Correctness/transparency first.
-- The learned router is not implemented (v2). v0 is heuristic.
+- A learned (GPU) router is intentionally out of scope. v0 is heuristic + verify/escalate.
 
 ## Learnings / analysis (the non-obvious stuff)
 
@@ -87,12 +87,12 @@ Brier = 0.181   ECE = 0.110
 ## Verification checklist for another agent
 
 - [ ] `npm install && npm run typecheck` → exit 0
-- [ ] `npm test` → 30 passing
+- [ ] `npm test` → 73 passing
 - [ ] `npm run build` → `dist/cli.js` exists and `node dist/cli.js version` prints `0.1.0`
 - [ ] `npm run eval` → maestro pass% and savings match the README
 - [ ] `npm run eval -- --verbose` → inspect per-fixture routing decisions
 - [ ] `bash scripts/verify.sh` → all endpoint smoke checks ✅
-- [ ] Open `test.html` in a browser while `npx openmaestro serve` runs → all cards PASS
+- [ ] Open `test.html` in a browser while `npm run serve` runs → all cards PASS
 - [ ] Put a real key in `.env`, re-run `scripts/verify.sh` → "real routing works" with real cost
 - [ ] Confirm `papers/` contains both source PDFs
 - [ ] Grep for overclaims: the repo should never assert "beats model X" without a reproducible number
