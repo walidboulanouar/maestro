@@ -18,7 +18,7 @@ An honest, verifiable head-to-head. We compare on the axes that matter for a **u
 | **Verify → escalate** loop, runnable | ✅ (tested) | ⚠️ present, but Conductor/Ultra has **no execution proof** (their handoff) | ❌ not an agent loop |
 | **Honest, reproducible benchmark** | ✅ `npm run eval` (offline, oracle-regret, calibration) | ❌ headline **+107% is an explicit MOCK** harness | ❌ **no weights/logs/benchmarks** shipped |
 | **Cost/route transparency** per request | ✅ `maestro` block + `x-maestro-*` | ❌ returns only `usage.fugu_turns` | ❌ |
-| **Tests / CI** | ✅ 65 tests + CI | ⚠️ partial; training code **stripped (~78% reconstructed)** | ❌ none shipped |
+| **Tests / CI** | ✅ 73 tests + CI | ⚠️ partial; training code **stripped (~78% reconstructed)** | ❌ none shipped |
 | **Swap models without retraining** | ✅ dated registry, slots→ids | ⚠️ slots remappable but research harness | ⚠️ adapter library, version-coupled overlay |
 | **Production endpoint discipline** | ✅ validation, errors, streaming, traces | ⚠️ research scaffold | ⚠️ serving pattern, low-to-medium readiness |
 | **License** | MIT | check repo | check repo |

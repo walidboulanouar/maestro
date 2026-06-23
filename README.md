@@ -17,7 +17,7 @@ Cheap-first, verify, escalate. Full cost and route transparency. Self-hostable. 
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A520-3c873a.svg)](package.json)
-[![tests](https://img.shields.io/badge/tests-65%20passing-brightgreen.svg)](test)
+[![tests](https://img.shields.io/badge/tests-73%20passing-brightgreen.svg)](test)
 [![status](https://img.shields.io/badge/status-v0.1%20early-orange.svg)](#roadmap)
 [![npm](https://img.shields.io/badge/npm-openmaestro%20(publishing%20soon)-lightgrey.svg)](https://github.com/walidboulanouar/maestro)
 
