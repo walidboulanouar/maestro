@@ -13,8 +13,6 @@ Cheap-first, verify, escalate. Full cost and route transparency. Self-hostable. 
 
 > **The one thing no other open-source project does:** Maestro is the only open-source LLM router you can self-host with **zero setup and no GPU** (bring one API key) that is **both OpenAI- and Anthropic-compatible** (works in Claude Code and opencode) with **per-request cost transparency** and a **reproducible benchmark**. OpenFugu needs a GPU; LoRA-Harness needs a GPU. See [COMPARISON.md](COMPARISON.md).
 
-> ⚠️ **Status: early. This is an honest ~5-hour build (v0.1).** The core works and is tested live on real models (routing, verify/escalate, tool/agent loops, OpenAI + Anthropic APIs, streaming, transparency). It is NOT production-hardened yet. Treat it as a strong, runnable foundation, not a finished product. See the [Roadmap](#roadmap) for what is next and [VERIFICATION.md](VERIFICATION.md) for exactly what is proven vs assumed.
-
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A520-3c873a.svg)](package.json)
 [![tests](https://img.shields.io/badge/tests-73%20passing-brightgreen.svg)](test)
@@ -94,7 +92,7 @@ ANTHROPIC_BASE_URL=http://localhost:8080 ANTHROPIC_API_KEY=unused claude
   "models": { "maestro-auto": {} } } } }
 ```
 
-**Tool calls pass straight through.** Maestro is a transparent proxy (like OpenRouter): it decides *which model* handles each call and returns the model's output (text or `tool_calls`) verbatim. Your app executes the tools and calls Maestro again with the result. Full setup for opencode / Claude Code / Cursor / Continue: **[docs/INTEGRATIONS.md](docs/INTEGRATIONS.md)**.
+**Tool calls pass straight through.** Maestro is a transparent proxy (like OpenRouter): it decides *which model* handles each call and returns the model's output (text or `tool_calls`) verbatim. Your app executes the tools and calls Maestro again with the result. Full setup for opencode / Claude Code / Cursor / Continue: **[docs/INTEGRATIONS.md](docs/INTEGRATIONS.md)**. Runnable use-cases + a one-command setup test: **[`examples/`](examples)**.
 
 ## Swap in your own models
 

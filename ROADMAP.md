@@ -74,7 +74,7 @@ Done when: a new user goes from install to a tuned, cost-profiled deployment in 
 
 Goal: routing that is measurably better than naive baselines on real, hard work.
 
-- [ ] **Executable verifier** for code/tools: run the tests instead of asking an LLM (huge reliability win). MUST use a real sandbox (isolated-vm / a privilege-dropped subprocess / a container) - `node:vm` is NOT safe for untrusted model code and was removed for that reason.
+- [ ] **Executable verifier** for code/tools: run the tests instead of asking an LLM (huge reliability win). MUST use a real sandbox - `node:vm` is NOT safe for untrusted model code and was removed for that reason. Planned via **Vercel Sandbox** (ephemeral micro-VM); setup in [docs/SANDBOX.md](docs/SANDBOX.md).
 - [ ] **Embedding router:** semantic task classification beyond heuristics, with calibration
 - [ ] **Calibrated confidence:** gate escalation on a measured confidence signal (track ECE/Brier)
 - [ ] **Large, long-running, tool-calling agent eval:** success = task completion via tools, not text match (the real validation; budget a paid run)

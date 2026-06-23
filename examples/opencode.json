@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "maestro": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Maestro",
+      "options": { "baseURL": "http://localhost:8080/v1" },
+      "models": {
+        "maestro-auto": { "name": "Maestro (auto-route)" },
+        "maestro-fugu": { "name": "Maestro (fast, single+verify)" },
+        "maestro-ultra": { "name": "Maestro (multi-step)" }
+      }
+    }
+  }
+}
